@@ -1,0 +1,5 @@
+* has_many association support
+  
+  class Author < ActiveRecord::Base
+    has_many :posts, :cached => true
+  end

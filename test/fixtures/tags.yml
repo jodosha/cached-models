@@ -1,0 +1,14 @@
+announcements_on_welcome:
+  taggable_id: 1
+  taggable_type: Post
+  name: announcements
+
+plugin_on_cached_models:
+  taggable_id: 2
+  taggable_type: Post
+  name: plugin
+
+rails_on_cached_models:
+  taggable_id: 2
+  taggable_type: Post
+  name: rails

@@ -1,0 +1,14 @@
+comment:
+  post_id: 1
+  email: john@doe.com
+  text: Good luck for your blog.
+
+positive_comment:
+  post_id: 2
+  email: john@doe.com
+  text: Very nice plugin, thank you!
+
+negative_comment:
+  post_id: 2
+  email: doe@john.com
+  text: Crappy stuff!
