@@ -12,3 +12,8 @@ negative_comment:
   post_id: 2
   email: doe@john.com
   text: Crappy stuff!
+
+comment_for_fight_club:
+  post_id: 3
+  email: john@doe.com
+  text: Awsome book!

@@ -88,7 +88,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
       authors(:luca).cached_posts << post
 
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
-      assert_equal posts_by_author(:chuck), authors(:chuck).reload.cached_posts
+      assert_equal posts_by_author(:chuck), authors(:chuck).cached_posts
     end
 
     def test_should_refresh_caches_when_pushing_element_to_polymorphic_association_belonging_to_another_model
@@ -99,7 +99,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
       posts(:cached_models).cached_tags << tag
       
       assert_equal tags_by_post(:cached_models), posts(:cached_models).cached_tags
-      assert_equal tags_by_post(:welcome), posts(:welcome).reload.cached_tags
+      assert_equal tags_by_post(:welcome), posts(:welcome).cached_tags
     end
 
     def test_should_not_use_cache_when_pushing_element_to_association_on_false_cached_option
@@ -109,7 +109,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
       authors(:luca).posts << post
     end
 
-    def test_should_not_refresh_caches_when_pushing_element_to_association_belonging_to_anotner_model_on_false_cached_option
+    def test_should_not_use_cache_when_pushing_element_to_association_belonging_to_anotner_model_on_false_cached_option
       cache.expects(:delete).never
       post = authors(:chuck).posts.last
       authors(:luca).posts << post
@@ -117,7 +117,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
       assert_equal posts_by_author(:luca), authors(:luca).posts
     end
     
-    def test_should_not_refresh_caches_when_pushing_element_to_polymorphic_association_belonging_to_another_model_on_false_cached_option
+    def test_should_not_use_cache_when_pushing_element_to_polymorphic_association_belonging_to_another_model_on_false_cached_option
       cache.expects(:delete).never
       tag = posts(:welcome).tags.last
       posts(:cached_models).tags << tag
@@ -137,7 +137,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
 
     def comments_by_author(author)
-      @comments_by_author ||= Comment.find(:all, :conditions => ["post_id IN (?)", authors(author).post_ids])
+      Comment.find(:all, :conditions => ["post_id IN (?)", authors(author).post_ids])
     end
 
     def association_proxy(author = :luca)
@@ -146,6 +146,10 @@ class HasManyAssociationTest < Test::Unit::TestCase
 
     def tags_association_proxy(post = :welcome)
       HasManyAssociation.new(posts(post), Post.reflect_on_association(:cached_tags))
+    end
+
+    def comments_association_proxy(author = :luca)
+      HasManyThroughAssociation.new(authors(author), Author.reflect_on_association(:cached_comments))
     end
 
     def create_post(options = {})

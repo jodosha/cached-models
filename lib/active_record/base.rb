@@ -5,7 +5,7 @@ module ActiveRecord
         ::Rails.cache
       end
     end
-    
+
     protected
       def rails_cache
         self.class.rails_cache

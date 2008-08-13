@@ -127,6 +127,7 @@ module ActiveRecord
           unless association.respond_to?(:loaded?)
             association = association_proxy_class.new(self, reflection)
             instance_variable_set(ivar, association)
+            association.observe if options[:cached]
           end
 
           reflection_cache_key = "#{cache_key}/#{reflection.name}"

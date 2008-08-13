@@ -1,3 +1,5 @@
+* Introducing CacheObserver in order to transparently handle cache expiring for has_many macro
+
 * Test enhancements for AssociationCollection#<< on polymorphic associations
 
 * Test enhancements for AssociationCollection#<<. Make sure to expire caches when an associated object changes owner.
