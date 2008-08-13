@@ -1,3 +1,12 @@
+* Test enhancements for AssociationCollection#<<. Make sure to expire caches when an associated object changes owner.
+
+  class Author < ActiveRecord::Base
+    has_many :posts, :cached => true
+  end
+
+  post = author.posts.last
+  another_author.posts << post # => refresh both author and another_author caches
+
 * AssociationCollection#<< support
 
   class Author < ActiveRecord::Base

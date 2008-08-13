@@ -70,45 +70,68 @@ class HasManyAssociationTest < Test::Unit::TestCase
       authors(:luca).comments
     end
     
-    def test_should_refresh_cache_when_pushing_new_associated_elements
+    def test_should_refresh_cache_when_pushing_element_to_association
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-      # FIXME the expectation is unsatisfied because the fixtures hasn't explicit timestamps,
-      # the push operation causes an update of the user updated_at column, this causes a change
-      # of the cache_key value.
-      # cache.expects(:write).with("#{cache_key}/cached_posts").returns true
+      cache.expects(:write).with("#{cache_key}/cached_posts", association_proxy).returns true
 
       post = create_post :author_id => nil
       authors(:luca).cached_posts << post
 
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
     end
+
+    def test_should_refresh_caches_when_pushing_element_to_association_belonging_to_another_model
+      cache.expects(:fetch).with("#{authors(:chuck).cache_key}/cached_posts").times(2).returns association_proxy(:chuck)
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:delete).with("#{authors(:chuck).cache_key}/cached_posts").returns true
+      post = authors(:chuck).cached_posts.last
+      authors(:luca).cached_posts << post
+
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+      assert_equal posts_by_author(:chuck), authors(:chuck).reload.cached_posts
+    end
+
+    def test_should_not_use_cache_when_pushing_element_to_association_on_false_cached_option
+      cache.expects(:write).never
+
+      post = create_post :author_id => nil
+      authors(:luca).posts << post
+    end
+
+    def test_should_not_refresh_caches_when_pushing_element_to_association_belonging_to_anotner_model_on_false_cached_option
+      cache.expects(:delete).never
+      post = authors(:chuck).posts.last
+      authors(:luca).posts << post
+
+      assert_equal posts_by_author(:luca), authors(:luca).posts
+    end
   end
-  
+
   private
     def posts_by_author(author, include_comments = false)
       conditions = include_comments ? { :include => :comments } : { }
       Post.find_all_by_author_id(authors(author).id, conditions)
     end
-    
+
     def tags_by_post(post)
       @tags_by_post ||= Tag.find_all_by_taggable_id(posts(post).id)
     end
-    
+
     def comments_by_author(author)
       @comments_by_author ||= Comment.find(:all, :conditions => ["post_id IN (?)", authors(author).post_ids])
     end
-    
-    def association_proxy
-      HasManyAssociation.new(authors(:luca), Author.reflect_on_association(:cached_posts))
+
+    def association_proxy(author = :luca)
+      HasManyAssociation.new(authors(author), Author.reflect_on_association(:cached_posts))
     end
-    
+
     def create_post(options = {})
       Post.new({ :author_id => 1,
         :title => 'CachedModels',
         :text => 'Introduction to CachedModels plugin',
         :published_at => 1.week.ago }.merge(options))
     end
-    
+
     def cache_key
       @cache_key ||= authors(:luca).cache_key
     end

@@ -11,3 +11,10 @@ cached_models:
   title: Cached Models
   text: Cached Models plugin overview
   published_at: <%= 2.weeks.ago %>
+
+fight_club:
+  id: 3
+  author_id: 2
+  title: Fight Club
+  text: This is a Fight Club review
+  published_at: <%= 1.week.ago %>

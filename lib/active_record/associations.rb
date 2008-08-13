@@ -1,6 +1,7 @@
 # FIXME load paths
-require File.dirname(__FILE__) + '/associations/has_many_association'
+require File.dirname(__FILE__) + '/associations/association_proxy'
 require File.dirname(__FILE__) + '/associations/association_collection'
+require File.dirname(__FILE__) + '/associations/has_many_association'
 
 module ActiveRecord
   module Associations
