@@ -1,3 +1,11 @@
+* AssociationCollection#<< support
+
+  class Author < ActiveRecord::Base
+    has_many :posts, :cached => true
+  end
+
+  author.posts << post # => causes a refresh of cached posts
+
 * has_many association support
   
   class Author < ActiveRecord::Base
