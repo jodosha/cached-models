@@ -91,6 +91,17 @@ class HasManyAssociationTest < Test::Unit::TestCase
       assert_equal posts_by_author(:chuck), authors(:chuck).reload.cached_posts
     end
 
+    def test_should_refresh_caches_when_pushing_element_to_polymorphic_association_belonging_to_another_model
+      cache.expects(:fetch).with("#{posts(:welcome).cache_key}/cached_tags").times(2).returns tags_association_proxy
+      cache.expects(:fetch).with("#{posts(:cached_models).cache_key}/cached_tags").times(2).returns tags_association_proxy(:cached_models)
+      cache.expects(:delete).with("#{posts(:welcome).cache_key}/cached_tags").returns true
+      tag = posts(:welcome).cached_tags.last
+      posts(:cached_models).cached_tags << tag
+      
+      assert_equal tags_by_post(:cached_models), posts(:cached_models).cached_tags
+      assert_equal tags_by_post(:welcome), posts(:welcome).reload.cached_tags
+    end
+
     def test_should_not_use_cache_when_pushing_element_to_association_on_false_cached_option
       cache.expects(:write).never
 
@@ -105,6 +116,14 @@ class HasManyAssociationTest < Test::Unit::TestCase
 
       assert_equal posts_by_author(:luca), authors(:luca).posts
     end
+    
+    def test_should_not_refresh_caches_when_pushing_element_to_polymorphic_association_belonging_to_another_model_on_false_cached_option
+      cache.expects(:delete).never
+      tag = posts(:welcome).tags.last
+      posts(:cached_models).tags << tag
+      
+      assert_equal tags_by_post(:cached_models), posts(:cached_models).tags
+    end
   end
 
   private
@@ -114,7 +133,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
 
     def tags_by_post(post)
-      @tags_by_post ||= Tag.find_all_by_taggable_id(posts(post).id)
+      Tag.find_all_by_taggable_id(posts(post).id)
     end
 
     def comments_by_author(author)
@@ -123,6 +142,10 @@ class HasManyAssociationTest < Test::Unit::TestCase
 
     def association_proxy(author = :luca)
       HasManyAssociation.new(authors(author), Author.reflect_on_association(:cached_posts))
+    end
+
+    def tags_association_proxy(post = :welcome)
+      HasManyAssociation.new(posts(post), Post.reflect_on_association(:cached_tags))
     end
 
     def create_post(options = {})
