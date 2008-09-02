@@ -1,3 +1,5 @@
+* Updated README example
+
 * Removed CacheObserver. Fixed cache expiration for has_many relation.
 
 * Introducing CacheObserver in order to transparently handle cache expiring for has_many macro

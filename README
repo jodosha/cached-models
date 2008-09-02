@@ -6,8 +6,42 @@ Introduction goes here.
 
 Example
 =======
+Using Memcached and Rails 2.2.0
 
-Example goes here.
+class Project < ActiveRecord::Base
+  has_many :developers, :cached => true
+end
+
+class Developer < ActiveRecord::Base
+  belongs_to :project
+end
+
+$ ./script/console
+Loading development environment (Rails 2.2.0)
+>> first_project = Project.find 1
+=> #<Project id: 1, name: "First Project", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">
+>> second_project = Project.find 2
+=> #<Project id: 2, name: "Second Project", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">
+
+# Fetch from database and automatically cached
+>> first_project.developers
+=> [#<Developer id: 118, project_id: 1, name: "Luca Guidi", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">,
+#<Developer id: 642301631, project_id: 1, name: "DHH", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">]
+>> second_project.developers
+=> []
+
+>> developer = first_project.developers.first
+=> #<Developer id: 118, project_id: 1, name: "Luca Guidi", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">
+
+# Update the record, then update the cache values for *both* projects
+>> second_project.developers << developer
+=> [#<Developer id: 118, project_id: 2, name: "Luca Guidi", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:08:16">]
+
+# Fetch cached values
+>> first_project.developers
+=> [#<Developer id: 642301631, project_id: 1, name: "DHH", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">]
+>> second_project.developers
+=> [#<Developer id: 118, project_id: 2, name: "Luca Guidi", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:08:16">]
 
 
 Copyright (c) 2008 Luca Guidi, released under the MIT license
