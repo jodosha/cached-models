@@ -3,7 +3,7 @@ require 'active_record'
 require 'active_record/fixtures'
 
 path_to_fixtures = File.dirname(__FILE__) + '/../test/fixtures'
-fixtures = %w( authors posts comments tags )
+fixtures = %w( authors blogs posts comments tags )
 
 namespace :cached_models do
   desc 'Run default task (test)'
@@ -28,8 +28,15 @@ namespace :cached_models do
         t.timestamps
       end
       
+      create_table :blogs, :force => true do |t|
+        t.string :title
+        
+        t.timestamps
+      end
+      
       create_table :posts, :force => true do |t|
         t.integer :author_id
+        t.integer :blog_id
         t.string :title
         t.text :text
         t.datetime :published_at

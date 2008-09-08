@@ -70,6 +70,15 @@ class HasManyAssociationTest < Test::Unit::TestCase
       authors(:luca).comments
     end
     
+    def test_should_refresh_cache_when_associated_elements_change
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      
+      post = authors(:luca).cached_posts.last # force cache loading and fetch a post
+      post.update_attributes :title => 'Cached Models!'
+      
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+    
     def test_should_refresh_cache_when_pushing_element_to_association
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
       cache.expects(:write).with("#{cache_key}/cached_posts", association_proxy).returns true
@@ -84,6 +93,10 @@ class HasManyAssociationTest < Test::Unit::TestCase
       cache.expects(:fetch).with("#{authors(:chuck).cache_key}/cached_posts").times(2).returns association_proxy(:chuck)
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
       cache.expects(:delete).with("#{authors(:chuck).cache_key}/cached_posts").returns true
+      
+      cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts").times(2).returns true
+      cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts_with_comments").times(2).returns true
+
       post = authors(:chuck).cached_posts.last
       authors(:luca).cached_posts << post
 
@@ -114,13 +127,16 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
 
     def test_should_not_use_cache_when_pushing_element_to_association_belonging_to_anotner_model_on_false_cached_option
-      cache.expects(:delete).never
-      post = authors(:chuck).posts.last
-      authors(:luca).posts << post
+      # Note, it *never* invoke cache expiration for Blog
+      cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts").times(2).returns true
+      cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts_with_comments").times(2).returns true
 
-      assert_equal posts_by_author(:luca), authors(:luca).posts
+      post = blogs(:weblog).posts.last
+      blogs(:blog).posts << post
+
+      assert_equal posts_by_blog(:blog), blogs(:blog).posts
     end
-    
+
     def test_should_not_use_cache_when_pushing_element_to_polymorphic_association_belonging_to_another_model_on_false_cached_option
       cache.expects(:delete).never
       tag = posts(:welcome).tags.last
@@ -134,6 +150,10 @@ class HasManyAssociationTest < Test::Unit::TestCase
     def posts_by_author(author, include_comments = false)
       conditions = include_comments ? { :include => :comments } : { }
       Post.find_all_by_author_id(authors(author).id, conditions)
+    end
+
+    def posts_by_blog(blog)
+      Post.find_all_by_blog_id(blogs(blog).id)
     end
 
     def tags_by_post(post)

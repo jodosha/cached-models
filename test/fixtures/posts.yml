@@ -1,5 +1,6 @@
 welcome:
   id: 1
+  blog_id: 1
   author_id: 1
   title: Welcome
   text: Welcome to my blog
@@ -7,6 +8,7 @@ welcome:
 
 cached_models:
   id: 2
+  blog_id: 1
   author_id: 1
   title: Cached Models
   text: Cached Models plugin overview
@@ -14,6 +16,7 @@ cached_models:
 
 fight_club:
   id: 3
+  blog_id: 2
   author_id: 2
   title: Fight Club
   text: This is a Fight Club review

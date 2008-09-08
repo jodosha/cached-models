@@ -116,7 +116,151 @@ module ActiveRecord
           collection_accessor_methods(reflection, HasManyAssociation, options)
         end
       end
-      
+
+      # Adds the following methods for retrieval and query for a single associated object for which this object holds an id:
+      # +association+ is replaced with the symbol passed as the first argument, so
+      # <tt>belongs_to :author</tt> would add among others <tt>author.nil?</tt>.
+      # * <tt>association(force_reload = false)</tt> - Returns the associated object. +nil+ is returned if none is found.
+      # * <tt>association=(associate)</tt> - Assigns the associate object, extracts the primary key, and sets it as the foreign key.
+      # * <tt>association.nil?</tt> - Returns +true+ if there is no associated object.
+      # * <tt>build_association(attributes = {})</tt> - Returns a new object of the associated type that has been instantiated
+      #   with +attributes+ and linked to this object through a foreign key, but has not yet been saved.
+      # * <tt>create_association(attributes = {})</tt> - Returns a new object of the associated type that has been instantiated
+      #   with +attributes+, linked to this object through a foreign key, and that has already been saved (if it passed the validation).
+      #
+      # Example: A Post class declares <tt>belongs_to :author</tt>, which will add:
+      # * <tt>Post#author</tt> (similar to <tt>Author.find(author_id)</tt>)
+      # * <tt>Post#author=(author)</tt> (similar to <tt>post.author_id = author.id</tt>)
+      # * <tt>Post#author?</tt> (similar to <tt>post.author == some_author</tt>)
+      # * <tt>Post#author.nil?</tt>
+      # * <tt>Post#build_author</tt> (similar to <tt>post.author = Author.new</tt>)
+      # * <tt>Post#create_author</tt> (similar to <tt>post.author = Author.new; post.author.save; post.author</tt>)
+      # The declaration can also include an options hash to specialize the behavior of the association.
+      #
+      # Options are:
+      # * <tt>:class_name</tt> - Specify the class name of the association. Use it only if that name can't be inferred
+      #   from the association name. So <tt>has_one :author</tt> will by default be linked to the Author class, but
+      #   if the real class name is Person, you'll have to specify it with this option.
+      # * <tt>:conditions</tt> - Specify the conditions that the associated object must meet in order to be included as a +WHERE+
+      #   SQL fragment, such as <tt>authorized = 1</tt>.
+      # * <tt>:select</tt> - By default, this is <tt>*</tt> as in <tt>SELECT * FROM</tt>, but can be changed if, for example, you want to do a join
+      #   but not include the joined columns. Do not forget to include the primary and foreign keys, otherwise it will raise an error.
+      # * <tt>:foreign_key</tt> - Specify the foreign key used for the association. By default this is guessed to be the name
+      #   of the association with an "_id" suffix. So a class that defines a <tt>belongs_to :person</tt> association will use
+      #   "person_id" as the default <tt>:foreign_key</tt>. Similarly, <tt>belongs_to :favorite_person, :class_name => "Person"</tt>
+      #   will use a foreign key of "favorite_person_id".
+      # * <tt>:dependent</tt> - If set to <tt>:destroy</tt>, the associated object is destroyed when this object is. If set to
+      #   <tt>:delete</tt>, the associated object is deleted *without* calling its destroy method. This option should not be specified when
+      #   <tt>belongs_to</tt> is used in conjunction with a <tt>has_many</tt> relationship on another class because of the potential to leave
+      #   orphaned records behind.
+      # * <tt>:counter_cache</tt> - Caches the number of belonging objects on the associate class through the use of +increment_counter+
+      #   and +decrement_counter+. The counter cache is incremented when an object of this class is created and decremented when it's
+      #   destroyed. This requires that a column named <tt>#{table_name}_count</tt> (such as +comments_count+ for a belonging Comment class)
+      #   is used on the associate class (such as a Post class). You can also specify a custom counter cache column by providing
+      #   a column name instead of a +true+/+false+ value to this option (e.g., <tt>:counter_cache => :my_custom_counter</tt>.)
+      #   When creating a counter cache column, the database statement or migration must specify a default value of <tt>0</tt>, failing to do 
+      #   this results in a counter with +NULL+ value, which will never increment.
+      #   Note: Specifying a counter cache will add it to that model's list of readonly attributes using +attr_readonly+.
+      # * <tt>:include</tt> - Specify second-order associations that should be eager loaded when this object is loaded.
+      # * <tt>:polymorphic</tt> - Specify this association is a polymorphic association by passing +true+.
+      #   Note: If you've enabled the counter cache, then you may want to add the counter cache attribute
+      #   to the +attr_readonly+ list in the associated classes (e.g. <tt>class Post; attr_readonly :comments_count; end</tt>).
+      # * <tt>:readonly</tt> - If true, the associated object is readonly through the association.
+      # * <tt>:validate</tt> - If false, don't validate the associated objects when saving the parent object. +false+ by default.
+      #
+      # Option examples:
+      #   belongs_to :firm, :foreign_key => "client_of"
+      #   belongs_to :author, :class_name => "Person", :foreign_key => "author_id"
+      #   belongs_to :valid_coupon, :class_name => "Coupon", :foreign_key => "coupon_id",
+      #              :conditions => 'discounts > #{payments_count}'
+      #   belongs_to :attachable, :polymorphic => true
+      #   belongs_to :project, :readonly => true
+      #   belongs_to :post, :counter_cache => true
+      #   belongs_to :blog, :cached => true
+      def belongs_to(association_id, options = {})
+        reflection = create_belongs_to_reflection(association_id, options)
+
+        ivar = "@#{reflection.name}"
+
+        if reflection.options[:polymorphic]
+          association_accessor_methods(reflection, BelongsToPolymorphicAssociation)
+
+          method_name = "polymorphic_belongs_to_before_save_for_#{reflection.name}".to_sym
+          define_method(method_name) do
+            association = instance_variable_get("#{ivar}") if instance_variable_defined?("#{ivar}")
+
+            if association && association.target
+              if association.new_record?
+                association.save(true)
+              end
+
+              if association.updated?
+                self["#{reflection.primary_key_name}"] = association.id
+                self["#{reflection.options[:foreign_type]}"] = association.class.base_class.name.to_s
+              end
+            end
+          end
+          before_save method_name
+        else
+          association_accessor_methods(reflection, BelongsToAssociation)
+          association_constructor_method(:build,  reflection, BelongsToAssociation)
+          association_constructor_method(:create, reflection, BelongsToAssociation)
+
+          method_name = "belongs_to_before_save_for_#{reflection.name}".to_sym
+          define_method(method_name) do
+            association = instance_variable_get("#{ivar}") if instance_variable_defined?("#{ivar}")
+
+            if !association.nil?
+              if association.new_record?
+                association.save(true)
+              end
+
+              if association.updated?
+                self["#{reflection.primary_key_name}"] = association.id
+              end
+            end
+          end
+          before_save method_name
+        end
+
+        # Create the callbacks to update counter cache
+        if options[:counter_cache]
+          cache_column = options[:counter_cache] == true ?
+            "#{self.to_s.underscore.pluralize}_count" :
+            options[:counter_cache]
+
+          method_name = "belongs_to_counter_cache_after_create_for_#{reflection.name}".to_sym
+          define_method(method_name) do
+            association = send("#{reflection.name}")
+            association.class.increment_counter("#{cache_column}", send("#{reflection.primary_key_name}")) unless association.nil?
+          end
+          after_create method_name
+
+          method_name = "belongs_to_counter_cache_before_destroy_for_#{reflection.name}".to_sym
+          define_method(method_name) do
+            association = send("#{reflection.name}")
+            association.class.decrement_counter("#{cache_column}", send("#{reflection.primary_key_name}")) unless association.nil?
+          end
+          before_destroy method_name
+
+          module_eval(
+            "#{reflection.class_name}.send(:attr_readonly,\"#{cache_column}\".intern) if defined?(#{reflection.class_name}) && #{reflection.class_name}.respond_to?(:attr_readonly)"
+          )
+        end
+
+        if options[:cached]
+          method_name = "belongs_to_after_save_for_#{reflection.name}".to_sym
+          define_method(method_name) do
+            send(reflection.name).expire_cache_for(self.class.name)
+          end
+          after_save method_name
+        end
+
+        add_single_associated_validation_callbacks(reflection.name) if options[:validate] == true
+
+        configure_dependency_for_belongs_to(reflection)
+      end
+
       def collection_reader_method(reflection, association_proxy_class, options)
         define_method(reflection.name) do |*params|
           ivar = "@#{reflection.name}"
@@ -196,6 +340,21 @@ module ActiveRecord
         options[:extend] = create_extension_modules(association_id, extension, options[:extend])
 
         create_reflection(:has_many, association_id, options, self)
+      end
+
+      def create_belongs_to_reflection(association_id, options)
+        options.assert_valid_keys(
+          :class_name, :foreign_key, :foreign_type, :remote, :select, :conditions, :include, :dependent,
+          :counter_cache, :extend, :polymorphic, :readonly, :validate, :cached
+        )
+
+        reflection = create_reflection(:belongs_to, association_id, options, self)
+
+        if options[:polymorphic]
+          reflection.options[:foreign_type] ||= reflection.class_name.underscore + "_type"
+        end
+
+        reflection
       end
     end
   end

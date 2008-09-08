@@ -4,44 +4,39 @@ CachedModels
 Introduction goes here.
 
 
-Example
-=======
-Using Memcached and Rails 2.2.0
+Usage
+=====
+Using Memcached and Rails 2.2.1
+
 
 class Project < ActiveRecord::Base
   has_many :developers, :cached => true
+  has_many :tickets, :cached => true
+  has_many :recent_tickets, :limit => 5,
+    :order => 'id DESC', :cached => true
+    
 end
 
 class Developer < ActiveRecord::Base
-  belongs_to :project
+  belongs_to :project, :cached => true
 end
 
-$ ./script/console
-Loading development environment (Rails 2.2.0)
->> first_project = Project.find 1
-=> #<Project id: 1, name: "First Project", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">
->> second_project = Project.find 2
-=> #<Project id: 2, name: "Second Project", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">
 
-# Fetch from database and automatically cached
->> first_project.developers
-=> [#<Developer id: 118, project_id: 1, name: "Luca Guidi", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">,
-#<Developer id: 642301631, project_id: 1, name: "DHH", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">]
->> second_project.developers
-=> []
+Example 1
+  project.developers # Database fetch and automatic cache storing
 
->> developer = first_project.developers.first
-=> #<Developer id: 118, project_id: 1, name: "Luca Guidi", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">
+  developer = project.developers.last
+  developer.update_attributes :first_name => 'Luca' # Database update and cache expiration for project cache
 
-# Update the record, then update the cache values for *both* projects
->> second_project.developers << developer
-=> [#<Developer id: 118, project_id: 2, name: "Luca Guidi", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:08:16">]
+Example 2
+  project2.developers # Database fetch and automatic cache storing
+  project2.developers << developer # Database update and cache renewal for both project and project2 caches
 
-# Fetch cached values
->> first_project.developers
-=> [#<Developer id: 642301631, project_id: 1, name: "DHH", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:03:55">]
->> second_project.developers
-=> [#<Developer id: 118, project_id: 2, name: "Luca Guidi", created_at: "2008-09-02 13:03:55", updated_at: "2008-09-02 13:08:16">]
+Example 3
+  project.tickets # Database fetch and automatic cache storing
+  ticket = project.recent_tickets.first
+  ticket.update_attributes :state => 'solved' # Database update and cache expiration for both tickets and recent_tickets entries
+
 
 
 Copyright (c) 2008 Luca Guidi, released under the MIT license

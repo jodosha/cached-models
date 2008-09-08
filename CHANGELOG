@@ -1,3 +1,5 @@
+* Added support for cache expiration on direct associated objects updates
+
 * Updated README example
 
 * Removed CacheObserver. Fixed cache expiration for has_many relation.
