@@ -1,3 +1,5 @@
+* Added support for cache renewal on AssociationCollection methods
+
 * Added support for cache expiration on direct associated objects updates
 
 * Updated README example

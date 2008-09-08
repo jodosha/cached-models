@@ -313,6 +313,11 @@ module ActiveRecord
             # Loads proxy class instance (defined in collection_reader_method) if not already loaded
             association = send(reflection.name)
             association.replace(new_value)
+
+            if options[:cached]
+              rails_cache.write("#{cache_key}/#{reflection.name}", association)
+            end
+
             association
           end
 

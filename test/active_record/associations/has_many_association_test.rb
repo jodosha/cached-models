@@ -5,6 +5,16 @@ class HasManyAssociationTest < Test::Unit::TestCase
   include ActiveRecord::Associations
   
   uses_mocha 'HasManyAssociationTest' do
+    def test_should_expire_cache_on_update
+      author = authors(:luca)
+      cache_key = author.cache_key
+      author.cached_posts # force cache loading
+      author.update_attributes :first_name => "LUCA"
+
+      assert_not_equal cache_key, author.cache_key
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+    
     def test_should_not_use_cache_on_false_cached_option
       cache.expects(:fetch).never
       authors(:luca).posts
@@ -128,8 +138,8 @@ class HasManyAssociationTest < Test::Unit::TestCase
 
     def test_should_not_use_cache_when_pushing_element_to_association_belonging_to_anotner_model_on_false_cached_option
       # Note, it *never* invoke cache expiration for Blog
-      cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts").times(2).returns true
-      cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts_with_comments").times(2).returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts").times(2).returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").times(2).returns true
 
       post = blogs(:weblog).posts.last
       blogs(:blog).posts << post
@@ -143,6 +153,51 @@ class HasManyAssociationTest < Test::Unit::TestCase
       posts(:cached_models).tags << tag
       
       assert_equal tags_by_post(:cached_models), posts(:cached_models).tags
+    end
+    
+    def test_should_update_cache_when_pushing_element_with_build
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:delete).with("#{cache_key}/cached_posts").times(2).returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").times(2).returns true
+
+      author = authors(:luca)
+      post = author.cached_posts.build post_options
+      post.save
+      
+      assert_equal posts_by_author(:luca), author.cached_posts
+    end
+    
+    def test_should_update_cache_when_pushing_element_with_create
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:delete).with("#{cache_key}/cached_posts").times(2).returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").times(2).returns true
+
+      author = authors(:luca)
+      author.cached_posts.create post_options(:title => "CM Overview")
+      
+      assert_equal posts_by_author(:luca), author.cached_posts
+    end
+
+    def test_should_update_cache_when_deleting_element_from_collection
+      authors(:luca).cached_posts.delete(posts_by_author(:luca).first)
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+
+    def test_should_update_cache_when_emptying_collection
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:write).with("#{cache_key}/cached_posts", []).returns true
+      authors(:luca).cached_posts.clear
+      
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+    
+    def test_should_update_cache_when_directly_assigning_a_new_collection
+      posts = [ posts_by_author(:luca).first ]
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:write).with("#{cache_key}/cached_posts", posts).returns true
+      authors(:luca).cached_posts = posts
+
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
     end
   end
 
@@ -181,6 +236,13 @@ class HasManyAssociationTest < Test::Unit::TestCase
         :title => 'CachedModels',
         :text => 'Introduction to CachedModels plugin',
         :published_at => 1.week.ago }.merge(options))
+    end
+
+    def post_options(options = {})
+      { :blog_id => blogs(:weblog).id,
+        :title => "Cached models review",
+        :text => "Cached models review..",
+        :published_at => 1.week.ago }.merge(options)
     end
 
     def cache_key
