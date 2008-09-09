@@ -3,6 +3,55 @@ require 'set'
 module ActiveRecord
   module Associations
     class AssociationCollection < AssociationProxy #:nodoc:
+      def find(*args)
+        expects_array = args.first.kind_of?(Array)
+        ids           = args.flatten.compact.uniq.map(&:to_i)
+
+        if @reflection.options[:cached]
+          result = rails_cache.read("#{@owner.cache_key}/#{@reflection.name}")
+          if result
+            result = result.select { |record| ids.include? record.id }
+            result = expects_array ? result : result.first
+            return result
+          end
+        end
+
+        options = args.extract_options!
+
+        # If using a custom finder_sql, scan the entire collection.
+        if @reflection.options[:finder_sql]
+          if ids.size == 1
+            id = ids.first
+            record = load_target.detect { |r| id == r.id }
+            expects_array ? [ record ] : record
+          else
+            load_target.select { |r| ids.include?(r.id) }
+          end
+        else
+          conditions = "#{@finder_sql}"
+          if sanitized_conditions = sanitize_sql(options[:conditions])
+            conditions << " AND (#{sanitized_conditions})"
+          end
+
+          options[:conditions] = conditions
+
+          if options[:order] && @reflection.options[:order]
+            options[:order] = "#{options[:order]}, #{@reflection.options[:order]}"
+          elsif @reflection.options[:order]
+            options[:order] = @reflection.options[:order]
+          end
+
+          # Build options specific to association
+          construct_find_options!(options)
+
+          merge_options_from_reflection!(options)
+
+          # Pass through args exactly as we received them.
+          args << options
+          @reflection.klass.find(*args)
+        end
+      end
+
       # Add +records+ to this association.  Returns +self+ so method calls may be chained.  
       # Since << flattens its argument list and inserts each record, +push+ and +concat+ behave identically.
       def <<(*records)
@@ -40,6 +89,10 @@ module ActiveRecord
             @target.delete(record)
             callback(:after_remove, record)
           end
+        end
+
+        if @reflection.options[:cached]
+          rails_cache.write("#{@owner.cache_key}/#{@reflection.name}", self)
         end
       end
 

@@ -1,3 +1,5 @@
+* Added support for scoped finders in AssociationCollection. Fixed cache renewal for AssociationCollection#delete.
+
 * Added support for cache renewal on AssociationCollection methods
 
 * Added support for cache expiration on direct associated objects updates

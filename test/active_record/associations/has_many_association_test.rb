@@ -4,17 +4,38 @@ require 'active_record/associations/has_many_association'
 class HasManyAssociationTest < Test::Unit::TestCase
   include ActiveRecord::Associations
   
+  def setup
+    Rails.cache.clear
+  end
+
   uses_mocha 'HasManyAssociationTest' do
     def test_should_expire_cache_on_update
       author = authors(:luca)
       cache_key = author.cache_key
       author.cached_posts # force cache loading
-      author.update_attributes :first_name => "LUCA"
+      author.update_attributes :first_name => author.first_name.upcase
 
       assert_not_equal cache_key, author.cache_key
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
     end
-    
+
+    def test_should_use_cache_when_find_with_scope
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(1).returns association_proxy
+      cache.expects(:read).with("#{cache_key}/cached_posts").times(2).returns posts_by_author(:luca)
+
+      post = authors(:luca).cached_posts.find(posts(:welcome).id)
+      assert_equal posts(:welcome), post
+    end
+
+    def test_should_use_cache_when_find_with_scope_using_multiple_ids
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(1).returns association_proxy
+      cache.expects(:read).with("#{cache_key}/cached_posts").times(2).returns posts_by_author(:luca)
+
+      ids = posts_by_author(:luca).map(&:id)
+      assert_equal posts_by_author(:luca),
+        authors(:luca).cached_posts.find(ids)
+    end
+
     def test_should_not_use_cache_on_false_cached_option
       cache.expects(:fetch).never
       authors(:luca).posts
@@ -179,13 +200,15 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
 
     def test_should_update_cache_when_deleting_element_from_collection
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+
       authors(:luca).cached_posts.delete(posts_by_author(:luca).first)
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
     end
 
     def test_should_update_cache_when_emptying_collection
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-      cache.expects(:write).with("#{cache_key}/cached_posts", []).returns true
+      cache.expects(:write).with("#{cache_key}/cached_posts", []).times(2).returns true
       authors(:luca).cached_posts.clear
       
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
@@ -194,7 +217,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
     def test_should_update_cache_when_directly_assigning_a_new_collection
       posts = [ posts_by_author(:luca).first ]
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-      cache.expects(:write).with("#{cache_key}/cached_posts", posts).returns true
+      cache.expects(:write).with("#{cache_key}/cached_posts", posts).times(2).returns true
       authors(:luca).cached_posts = posts
 
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
