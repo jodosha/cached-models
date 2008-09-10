@@ -5,10 +5,10 @@ require 'active_record/fixtures'
 path_to_fixtures = File.dirname(__FILE__) + '/../test/fixtures'
 fixtures = %w( authors blogs posts comments tags )
 
+desc 'Run default task (test)'
+task :cached_models => 'cached_models:test'
+
 namespace :cached_models do
-  desc 'Run default task (test)'
-  task :default => :test
-  
   desc 'Reset the CachedModels data'
   task :reset => [ :teardown, :setup ]
 

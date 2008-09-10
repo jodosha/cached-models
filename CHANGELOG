@@ -1,3 +1,5 @@
+* Make sure 'test' is the default Rake task
+
 * Added project description to README. Added about.yml.
 
 * Updated README with informations about required environment settings
