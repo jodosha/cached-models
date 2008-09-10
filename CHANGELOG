@@ -1,3 +1,5 @@
+* Updated README with informations about required environment settings
+
 * Only load the plugin if the current environment has the cache turned on
 
 * Added support for cache expiration on after_save callback
