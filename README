@@ -1,7 +1,7 @@
 CachedModels
 ============
 
-Introduction goes here.
+CachedModels provides to your models a transparent approach to use Rails internal caching mechanism.
 
 
 Usage
