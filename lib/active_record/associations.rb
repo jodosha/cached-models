@@ -115,6 +115,8 @@ module ActiveRecord
         else
           collection_accessor_methods(reflection, HasManyAssociation, options)
         end
+
+        add_cache_callbacks if options[:cached]
       end
 
       # Adds the following methods for retrieval and query for a single associated object for which this object holds an id:
@@ -360,6 +362,20 @@ module ActiveRecord
         end
 
         reflection
+      end
+
+      def add_cache_callbacks
+        method_name = :after_save_cache_expire
+        return if respond_to? method_name
+
+        define_method(method_name) do
+          return unless self[:updated_at]
+
+          self.class.reflections.each do |name, reflection|
+            rails_cache.delete("#{cache_key}/#{name}") if reflection.options[:cached]
+          end
+        end
+        after_save method_name
       end
     end
   end

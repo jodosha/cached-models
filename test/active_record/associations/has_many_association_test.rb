@@ -11,11 +11,34 @@ class HasManyAssociationTest < Test::Unit::TestCase
   uses_mocha 'HasManyAssociationTest' do
     def test_should_expire_cache_on_update
       author = authors(:luca)
-      cache_key = author.cache_key
+      old_cache_key = author.cache_key
+
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:delete).with("#{cache_key}/cached_posts").times(3).returns true
+      cache.expects(:delete).with("#{cache_key}/cached_comments").times(3).returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").times(3).returns true
+
       author.cached_posts # force cache loading
       author.update_attributes :first_name => author.first_name.upcase
 
-      assert_not_equal cache_key, author.cache_key
+      # assert_not_equal old_cache_key, author.cache_key
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+
+    def test_should_not_expire_cache_on_update_on_missing_updated_at
+      author = authors(:luca)
+      old_cache_key = author.cache_key
+
+      author.stubs(:[]).with(:updated_at).returns nil
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:delete).with("#{cache_key}/cached_posts").never
+      cache.expects(:delete).with("#{cache_key}/cached_comments").never
+      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").never
+
+      author.cached_posts # force cache loading
+      author.update_attributes :first_name => author.first_name.upcase
+
+      # assert_not_equal old_cache_key, author.cache_key
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
     end
 
@@ -127,6 +150,8 @@ class HasManyAssociationTest < Test::Unit::TestCase
       
       cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts").returns true
       cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts_with_comments").returns true
+      cache.expects(:delete).with("#{posts(:fight_club).cache_key}/cached_tags")
+      cache.expects(:delete).with("#{posts(:fight_club).cache_key}/author")
 
       post = authors(:chuck).cached_posts.last
       authors(:luca).cached_posts << post
@@ -161,6 +186,8 @@ class HasManyAssociationTest < Test::Unit::TestCase
       cache.expects(:delete).with("#{blogs(:weblog).cache_key}/posts").never
       cache.expects(:delete).with("#{cache_key}/cached_posts").returns true
       cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").returns true
+      cache.expects(:delete).with("#{posts(:cached_models).cache_key}/cached_tags").returns true
+      cache.expects(:delete).with("#{posts(:cached_models).cache_key}/author").returns true
 
       post = blogs(:weblog).posts.last
       blogs(:blog).posts << post
@@ -180,6 +207,8 @@ class HasManyAssociationTest < Test::Unit::TestCase
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
       cache.expects(:delete).with("#{cache_key}/cached_posts").returns true
       cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").returns true
+      cache.expects(:delete).with("#{latest_post_cache_key}/cached_tags").returns true
+      cache.expects(:delete).with("#{latest_post_cache_key}/author").returns true
 
       author = authors(:luca)
       post = author.cached_posts.build post_options
@@ -192,6 +221,8 @@ class HasManyAssociationTest < Test::Unit::TestCase
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
       cache.expects(:delete).with("#{cache_key}/cached_posts").returns true
       cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").returns true
+      cache.expects(:delete).with("#{latest_post_cache_key}/cached_tags").returns true
+      cache.expects(:delete).with("#{latest_post_cache_key}/author").returns true
 
       author = authors(:luca)
       author.cached_posts.create post_options(:title => "CM Overview")
@@ -270,5 +301,15 @@ class HasManyAssociationTest < Test::Unit::TestCase
 
     def cache_key
       @cache_key ||= authors(:luca).cache_key
+    end
+
+    def updated_at(reload = false)
+      @updated_at = nil if reload
+      @updated_at ||= posts(:welcome).updated_at.to_s(:number)
+    end
+
+    def latest_post_cache_key(reload = false)
+      @latest_post_cache_key = nil if reload
+      @latest_post_cache_key ||= "posts/4-#{updated_at(reload)}"
     end
 end

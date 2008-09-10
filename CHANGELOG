@@ -1,3 +1,5 @@
+* Added support for cache expiration on after_save callback
+
 * Make sure to use ActiveRecord cache proxy for test suite
 
 * Make sure test suite will run using RAILS_ENV in test mode
