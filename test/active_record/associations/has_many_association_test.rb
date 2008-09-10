@@ -20,7 +20,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
 
     def test_should_use_cache_when_find_with_scope
-      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(1).returns association_proxy
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").returns association_proxy
       cache.expects(:read).with("#{cache_key}/cached_posts").times(2).returns posts_by_author(:luca)
 
       post = authors(:luca).cached_posts.find(posts(:welcome).id)
@@ -28,7 +28,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
 
     def test_should_use_cache_when_find_with_scope_using_multiple_ids
-      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(1).returns association_proxy
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").returns association_proxy
       cache.expects(:read).with("#{cache_key}/cached_posts").times(2).returns posts_by_author(:luca)
 
       ids = posts_by_author(:luca).map(&:id)
@@ -125,8 +125,8 @@ class HasManyAssociationTest < Test::Unit::TestCase
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
       cache.expects(:delete).with("#{authors(:chuck).cache_key}/cached_posts").returns true
       
-      cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts").times(2).returns true
-      cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts_with_comments").times(2).returns true
+      cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts").returns true
+      cache.expects(:delete).with("#{authors(:luca).cache_key}/cached_posts_with_comments").returns true
 
       post = authors(:chuck).cached_posts.last
       authors(:luca).cached_posts << post
@@ -158,9 +158,9 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
 
     def test_should_not_use_cache_when_pushing_element_to_association_belonging_to_anotner_model_on_false_cached_option
-      # Note, it *never* invoke cache expiration for Blog
-      cache.expects(:delete).with("#{cache_key}/cached_posts").times(2).returns true
-      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").times(2).returns true
+      cache.expects(:delete).with("#{blogs(:weblog).cache_key}/posts").never
+      cache.expects(:delete).with("#{cache_key}/cached_posts").returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").returns true
 
       post = blogs(:weblog).posts.last
       blogs(:blog).posts << post
@@ -178,8 +178,8 @@ class HasManyAssociationTest < Test::Unit::TestCase
     
     def test_should_update_cache_when_pushing_element_with_build
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-      cache.expects(:delete).with("#{cache_key}/cached_posts").times(2).returns true
-      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").times(2).returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts").returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").returns true
 
       author = authors(:luca)
       post = author.cached_posts.build post_options
@@ -190,8 +190,8 @@ class HasManyAssociationTest < Test::Unit::TestCase
     
     def test_should_update_cache_when_pushing_element_with_create
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-      cache.expects(:delete).with("#{cache_key}/cached_posts").times(2).returns true
-      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").times(2).returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts").returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").returns true
 
       author = authors(:luca)
       author.cached_posts.create post_options(:title => "CM Overview")

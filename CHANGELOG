@@ -1,3 +1,5 @@
+* Make sure test suite will run using RAILS_ENV in test mode
+
 * Added support for scoped finders in AssociationCollection. Fixed cache renewal for AssociationCollection#delete.
 
 * Added support for cache renewal on AssociationCollection methods
