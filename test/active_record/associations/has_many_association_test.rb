@@ -5,7 +5,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
   include ActiveRecord::Associations
   
   def setup
-    Rails.cache.clear
+    cache.clear
   end
 
   uses_mocha 'HasManyAssociationTest' do
