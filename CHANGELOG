@@ -1,3 +1,5 @@
+* Only load the plugin if the current environment has the cache turned on
+
 * Added support for cache expiration on after_save callback
 
 * Make sure to use ActiveRecord cache proxy for test suite
