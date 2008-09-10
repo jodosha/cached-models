@@ -1,11 +1,13 @@
-CachedModels
-============
+= CachedModels
 
 CachedModels provides to your models a transparent approach to use Rails internal caching mechanism.
 
+Check for news and tutorials at the {project home page}[http://www.lucaguidi.com/pages/cached_models].
 
-Usage
-=====
+
+
+= Usage
+
 Using Memcached and Rails 2.2.1
 
 Make sure to configure your current environment with:
@@ -43,6 +45,23 @@ Example 3
   project.tickets # Database fetch and automatic cache storing
   ticket = project.recent_tickets.first
   ticket.update_attributes :state => 'solved' # Database update and cache expiration for both tickets and recent_tickets entries
+
+
+= Install
+
+$ ./script/plugin install git://github.com/jodosha/cached_models.git
+
+
+
+= Contribute
+
+* Check out the code and test it:
+  $ git clone git://github.com/jodosha/cached_models.git
+  $ rake cached_models
+
+* Create a ticket to the {Sushistar Lighthouse page}[http://sushistar.lighthouseapp.com]
+
+* Create a patch and add as attachment to the ticket.
 
 
 
