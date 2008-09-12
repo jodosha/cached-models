@@ -22,8 +22,10 @@ namespace :cached_models do
   task :create_tables => :environment do
     ActiveRecord::Schema.define do
       create_table :authors, :force => true do |t|
-        t.string :first_name
-        t.string :last_name
+        t.integer :blog_id
+        t.string  :first_name
+        t.string  :last_name
+        t.integer :age
 
         t.timestamps
       end

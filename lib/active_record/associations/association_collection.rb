@@ -72,39 +72,23 @@ module ActiveRecord
         result && self
       end
 
-      # Remove +records+ from this association.  Does not destroy +records+.
-      def delete(*records)
-        records = flatten_deeper(records)
-        records.each { |record| raise_on_type_mismatch(record) }
-        
-        @owner.transaction do
-          records.each { |record| callback(:before_remove, record) }
-          
-          old_records = records.reject {|r| r.new_record? }
-          delete_records(old_records) if old_records.any?
-          
-          records.each do |record|
-            @target.delete(record)
-            callback(:after_remove, record)
-          end
+      # Returns the size of the collection by executing a SELECT COUNT(*) query if the collection hasn't been loaded and
+      # calling collection.size if it has. If it's more likely than not that the collection does have a size larger than zero
+      # and you need to fetch that collection afterwards, it'll take one less SELECT query if you use length.
+      def size
+        if @reflection.options[:cached]
+          result = @owner.send(:cache_read, @reflection)
+          return result.to_ary.size if result
         end
 
-        @owner.send(:cache_write, @reflection, self) if @reflection.options[:cached]
-      end
-
-      # Removes all records from this association.  Returns +self+ so method calls may be chained.
-      def clear
-        return self if length.zero? # forces load_target if it hasn't happened already
-
-        if @reflection.options[:dependent] && @reflection.options[:dependent] == :destroy
-          destroy_all
-        else          
-          delete_all
+        if @owner.new_record? || (loaded? && !@reflection.options[:uniq])
+          @target.size
+        elsif !loaded? && !@reflection.options[:uniq] && @target.is_a?(Array)
+          unsaved_records = @target.select { |r| r.new_record? }
+          unsaved_records.size + count_records
+        else
+          count_records
         end
-
-        @owner.send(:cache_write, @reflection, self) if @reflection.options[:cached]
-
-        self
       end
     end
   end

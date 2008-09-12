@@ -28,6 +28,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
       old_cache_key = author.cache_key
 
       author.stubs(:[]).with(:updated_at).returns nil
+      author.expects(:[]).with('blog_id').returns author.blog_id
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
       cache.expects(:delete).with("#{cache_key}/cached_posts").never
       cache.expects(:delete).with("#{cache_key}/cached_comments").never
@@ -53,6 +54,52 @@ class HasManyAssociationTest < Test::Unit::TestCase
       ids = posts_by_author(:luca).map(&:id)
       assert_equal posts_by_author(:luca),
         authors(:luca).cached_posts.find(ids)
+    end
+
+    def test_should_use_cache_when_fetch_first_from_collection
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").returns association_proxy
+      # cache.expects(:read).with("#{cache_key}/cached_posts").returns posts_by_author(:luca)
+
+      assert_equal [ posts_by_author(:luca).first ],
+        authors(:luca).cached_posts.first(1)
+    end
+
+    def test_should_use_cache_when_fetch_last_from_collection
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").returns association_proxy
+      # cache.expects(:read).with("#{cache_key}/cached_posts").returns posts_by_author(:luca)
+
+      assert_equal [ posts_by_author(:luca).last ],
+        authors(:luca).cached_posts.last(1)
+    end
+
+    def test_should_use_cache_when_reset_collection
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+
+      assert_false authors(:luca).cached_posts.reset
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+
+    def test_should_expire_cache_when_delete_all_elements_from_collection
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      # cache.expects(:read).with("#{cache_key}/cached_posts").returns posts_by_author(:luca)
+
+      authors(:luca).cached_posts.delete_all
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+
+    def test_should_expire_cache_when_destroy_all_elements_from_collection
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      # cache.expects(:read).with("#{cache_key}/cached_posts").returns posts_by_author(:luca)
+
+      authors(:luca).cached_posts.destroy_all
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+
+    def test_should_use_cache_on_collection_sum
+      cache.expects(:fetch).with("#{blogs(:weblog).cache_key}/authors").returns authors_association_proxy
+
+      assert_equal authors_by_blog(:weblog).map(&:age).sum,
+        blogs(:weblog).authors.sum(:age)
     end
 
     def test_should_not_use_cache_on_false_cached_option
@@ -119,8 +166,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
       cache.expects(:fetch).never
       authors(:luca).comments
     end
-    
-    # FIXME
+
     def test_should_refresh_cache_when_associated_elements_change
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
       
@@ -129,8 +175,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
       
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
     end
-    
-    # FIXME
+
     def test_should_refresh_cache_when_pushing_element_to_association
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
       cache.expects(:write).with("#{cache_key}/cached_posts", association_proxy).returns true
@@ -166,7 +211,6 @@ class HasManyAssociationTest < Test::Unit::TestCase
       assert_equal tags_by_post(:welcome), posts(:welcome).cached_tags
     end
 
-    # FIXME
     def test_should_not_use_cache_when_pushing_element_to_association_on_false_cached_option
       cache.expects(:write).never
 
@@ -209,6 +253,15 @@ class HasManyAssociationTest < Test::Unit::TestCase
       assert_equal posts_by_author(:luca), author.cached_posts
     end
 
+    def test_should_update_cache_when_pushing_element_with_create_bang_method
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+
+      author = authors(:luca)
+      author.cached_posts.create! post_options(:title => "CM Overview!!")
+
+      assert_equal posts_by_author(:luca), author.cached_posts
+    end
+
     def test_should_update_cache_when_deleting_element_from_collection
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
 
@@ -216,21 +269,70 @@ class HasManyAssociationTest < Test::Unit::TestCase
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
     end
 
-    def test_should_update_cache_when_emptying_collection
+    def test_should_update_cache_when_clearing_collection
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-      cache.expects(:write).with("#{cache_key}/cached_posts", []).times(2).returns true
       authors(:luca).cached_posts.clear
       
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+
+    def test_should_update_cache_when_clearing_collection_with_dependent_destroy_option
+      cache.expects(:fetch).with("#{cache_key}/cached_dependent_posts").times(2).returns association_proxy
+      authors(:luca).cached_dependent_posts.clear
+
+      assert_equal posts_by_author(:luca), authors(:luca).cached_dependent_posts
     end
     
     def test_should_update_cache_when_directly_assigning_a_new_collection
       posts = [ posts_by_author(:luca).first ]
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-      cache.expects(:write).with("#{cache_key}/cached_posts", posts).times(2).returns true
       authors(:luca).cached_posts = posts
 
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+
+    def test_should_update_cache_when_replace_collection
+      post = create_post; post.save
+      posts = [ posts_by_author(:luca).first, post ]
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      authors(:luca).cached_posts.replace(posts)
+
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    end
+
+    def test_should_use_cache_for_collection_size
+      # cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+
+      assert_equal posts_by_author(:luca).size,
+        authors(:luca).cached_posts.size
+    end
+
+    def test_should_use_cache_for_collection_length
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").returns association_proxy
+
+      assert_equal posts_by_author(:luca).length,
+        authors(:luca).cached_posts.length
+    end
+
+    def test_should_use_cache_for_collection_empty
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").returns association_proxy
+
+      assert_equal posts_by_author(:luca).empty?,
+        authors(:luca).cached_posts.empty?
+    end
+
+    def test_should_use_cache_for_collection_any
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").returns association_proxy
+
+      assert_equal posts_by_author(:luca).any?,
+        authors(:luca).cached_posts.any?
+    end
+
+    def test_should_use_cache_for_collection_include
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").returns association_proxy
+
+      post = posts_by_author(:luca).first
+      assert authors(:luca).cached_posts.include?(post)
     end
   end
 
@@ -252,8 +354,16 @@ class HasManyAssociationTest < Test::Unit::TestCase
       Comment.find(:all, :conditions => ["post_id IN (?)", authors(author).post_ids])
     end
 
+    def authors_by_blog(blog)
+      Author.find_all_by_blog_id(blogs(blog).id)
+    end
+
     def association_proxy(author = :luca)
       HasManyAssociation.new(authors(author), Author.reflect_on_association(:cached_posts))
+    end
+
+    def authors_association_proxy(blog = :weblog)
+      HasManyAssociation.new(blogs(blog), Blog.reflect_on_association(:authors))
     end
 
     def tags_association_proxy(post = :welcome)

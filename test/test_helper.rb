@@ -22,6 +22,11 @@ class Test::Unit::TestCase
   self.use_instantiated_fixtures  = false
   fixtures :all
   
+  # Assert the given condition is false
+  def assert_false(condition, message = nil)
+    assert !condition, message
+  end
+
   private
     def cache
       ActiveRecord::Base.rails_cache

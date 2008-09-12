@@ -1,9 +1,13 @@
 luca:
   id: 1
+  blog_id: 1
   first_name: Luca
   last_name: Guidi
+  age: <%= Time.now.year - 1982 %>
 
 chuck:
   id: 2
+  blog_id: 1
   first_name: Chuck
   last_name: Palahniuk
+  age: <%= Time.now.year - 1962 %>
