@@ -1,3 +1,5 @@
+* ActiveRecord::Base#expire_cache_for now uses the new cache access API
+
 * Abstracted ActiveRecord::Base#cache_fetch in order to normalize cache access for <reflection_name>_ids
 
 * Reduced the amount of cache hits, caching the status of cached relations with ActiveRecord::Base#cached_associations

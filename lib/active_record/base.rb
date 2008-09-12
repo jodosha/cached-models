@@ -28,7 +28,7 @@ module ActiveRecord
       def expire_cache_for(class_name)
         self.class.reflections.each do |name, reflection|
           if reflection.options[:cached] and reflection.class_name == class_name
-            rails_cache.delete("#{cache_key}/#{name}")
+            cache_delete(reflection)
           end
         end
       end
