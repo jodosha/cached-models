@@ -8,7 +8,7 @@ module ActiveRecord
         ids           = args.flatten.compact.uniq.map(&:to_i)
 
         if @reflection.options[:cached]
-          result = rails_cache.read("#{@owner.cache_key}/#{@reflection.name}")
+          result = @owner.send(:cache_read, @reflection)
           if result
             result = result.select { |record| ids.include? record.id }
             result = expects_array ? result : result.first
@@ -67,9 +67,7 @@ module ActiveRecord
           end
         end
 
-        if @reflection.options[:cached]
-          rails_cache.write("#{@owner.cache_key}/#{@reflection.name}", self)
-        end
+        @owner.send(:cache_write, @reflection, self) if @reflection.options[:cached]
 
         result && self
       end
@@ -91,9 +89,7 @@ module ActiveRecord
           end
         end
 
-        if @reflection.options[:cached]
-          rails_cache.write("#{@owner.cache_key}/#{@reflection.name}", self)
-        end
+        @owner.send(:cache_write, @reflection, self) if @reflection.options[:cached]
       end
 
       # Removes all records from this association.  Returns +self+ so method calls may be chained.
@@ -106,9 +102,7 @@ module ActiveRecord
           delete_all
         end
 
-        if @reflection.options[:cached]
-          rails_cache.write("#{@owner.cache_key}/#{@reflection.name}", self)
-        end
+        @owner.send(:cache_write, @reflection, self) if @reflection.options[:cached]
 
         self
       end

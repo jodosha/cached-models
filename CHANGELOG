@@ -1,3 +1,7 @@
+* Reduced the amount of cache hits, caching the status of cached relations with ActiveRecord::Base#cached_associations
+
+
+
 *0.0.1 (September 10th, 2008)*
 
 * Updated README with project informations

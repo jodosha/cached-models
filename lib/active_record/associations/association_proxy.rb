@@ -19,7 +19,7 @@ module ActiveRecord
         def reset_association_cache(record)
           current_owner = current_owner(record)
           return unless current_owner
-          rails_cache.delete("#{current_owner.cache_key}/#{@reflection.name}")
+          current_owner.send(:cache_delete, @reflection)
         end
 
         def current_owner(record)

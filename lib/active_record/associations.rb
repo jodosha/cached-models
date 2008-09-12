@@ -268,10 +268,9 @@ module ActiveRecord
           ivar = "@#{reflection.name}"
 
           force_reload = params.first unless params.empty?
-          reflection_cache_key = "#{cache_key}/#{reflection.name}"
 
           association = if options[:cached]
-            rails_cache.read(reflection_cache_key)
+            cache_read(reflection)
           else
             instance_variable_get(ivar) if instance_variable_defined?(ivar)
           end
@@ -283,11 +282,11 @@ module ActiveRecord
 
           if force_reload
             association.reload
-            rails_cache.delete(reflection_cache_key) if options[:cached]
+            cache_delete(reflection) if options[:cached]
           end
 
           if options[:cached]
-            rails_cache.fetch(reflection_cache_key) { association }
+            cache_fetch(reflection, association)
           else
             association
           end
@@ -296,6 +295,8 @@ module ActiveRecord
         method_name = "#{reflection.name.to_s.singularize}_ids"
         define_method(method_name) do
           if options[:cached]
+            # TODO abstract cache_fetch
+            # cache_fetch(reflection, send("calculate_#{method_name}"))
             rails_cache.fetch("#{cache_key}/#{method_name}") { send("calculate_#{method_name}") }
           else
             send("calculate_#{method_name}")
@@ -316,9 +317,7 @@ module ActiveRecord
             association = send(reflection.name)
             association.replace(new_value)
 
-            if options[:cached]
-              rails_cache.write("#{cache_key}/#{reflection.name}", association)
-            end
+            cache_write(reflection, association) if options[:cached]
 
             association
           end
@@ -372,7 +371,7 @@ module ActiveRecord
           return unless self[:updated_at]
 
           self.class.reflections.each do |name, reflection|
-            rails_cache.delete("#{cache_key}/#{name}") if reflection.options[:cached]
+            cache_delete(reflection) if reflection.options[:cached]
           end
         end
         after_save method_name

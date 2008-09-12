@@ -32,5 +32,32 @@ module ActiveRecord
           end
         end
       end
+      
+      def cache_read(reflection)
+        return unless cached_associations[reflection.name]
+        rails_cache.read(reflection_cache_key(reflection))
+      end
+
+      def cache_write(reflection, value)
+        cached_associations[reflection.name] = rails_cache.write(reflection_cache_key(reflection), value)
+      end
+
+      def cache_delete(reflection)
+        return unless cached_associations[reflection.name]
+        cached_associations[reflection.name] = !rails_cache.delete(reflection_cache_key(reflection))
+      end
+
+      def cache_fetch(reflection, value)
+        cached_associations[reflection.name] = true
+        rails_cache.fetch(reflection_cache_key(reflection)) { value }
+      end
+      
+      def reflection_cache_key(reflection)
+        "#{cache_key}/#{reflection.name}"
+      end
+      
+      def cached_associations
+        @cached_associations ||= {}
+      end
   end
 end
