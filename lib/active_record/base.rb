@@ -48,8 +48,17 @@ module ActiveRecord
       end
 
       def cache_fetch(reflection, value)
-        cached_associations[reflection.name] = true
-        rails_cache.fetch(reflection_cache_key(reflection)) { value }
+        reflection_name, key = extract_options_for_cache(reflection)
+        cached_associations[reflection_name] = true
+        rails_cache.fetch(key) { value }
+      end
+      
+      def extract_options_for_cache(reflection)
+        if reflection.is_a?(AssociationReflection)
+          [ reflection.name, reflection_cache_key(reflection) ]
+        else
+          [ reflection.split('/').last, reflection ]
+        end
       end
       
       def reflection_cache_key(reflection)

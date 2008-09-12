@@ -76,6 +76,7 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
     
     def test_should_cache_associated_ids
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
       cache.expects(:fetch).with("#{cache_key}/cached_post_ids").times(2).returns(posts_by_author(:luca).map(&:id))
       ids = authors(:luca).cached_post_ids
       assert_equal ids, authors(:luca).cached_post_ids

@@ -295,9 +295,7 @@ module ActiveRecord
         method_name = "#{reflection.name.to_s.singularize}_ids"
         define_method(method_name) do
           if options[:cached]
-            # TODO abstract cache_fetch
-            # cache_fetch(reflection, send("calculate_#{method_name}"))
-            rails_cache.fetch("#{cache_key}/#{method_name}") { send("calculate_#{method_name}") }
+            cache_fetch("#{cache_key}/#{method_name}", send("calculate_#{method_name}"))
           else
             send("calculate_#{method_name}")
           end
