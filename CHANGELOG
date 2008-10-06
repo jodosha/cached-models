@@ -1,3 +1,5 @@
+* Made independent of Rails
+
 * Allow test suite to work without any active cache server
 
 * Enhanced AssociationCollection test coverage

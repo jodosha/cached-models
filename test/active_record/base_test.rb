@@ -4,11 +4,13 @@ class BaseTest < Test::Unit::TestCase
   fixtures :authors
 
   def test_should_have_cache
-    assert_equal RAILS_CACHE, ActiveRecord::Base.rails_cache
+    assert_equal RAILS_CACHE, ActiveRecord::Base.rails_cache if defined? Rails
+    assert_kind_of ActiveSupport::Cache::Store, ActiveRecord::Base.rails_cache
   end
   
   def test_should_wrap_rails_cache
-    assert_equal RAILS_CACHE, Post.new.send(:rails_cache)
+    assert_equal RAILS_CACHE, Post.new.send(:rails_cache) if defined? Rails
+    assert_kind_of ActiveSupport::Cache::Store, Post.new.send(:rails_cache)
   end
   
   def test_reflection_cache_key
@@ -26,5 +28,12 @@ class BaseTest < Test::Unit::TestCase
     
     author.send(:cache_delete, Author.reflections[:cached_posts])
     assert_equal({:cached_posts => false}, author.send(:cached_associations))
+  end
+
+  def test_should_load_without_rails
+    configuration = File.dirname(__FILE__) + '/../../config/cached_models.rb'
+    options = eval IO.read(configuration), binding, configuration
+    cache = ActiveSupport::Cache.lookup_store(options)
+    assert_kind_of ActiveSupport::Cache::Store, cache
   end
 end

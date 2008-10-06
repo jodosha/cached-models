@@ -1,10 +1,7 @@
 module ActiveRecord
   class Base
-    class << self
-      def rails_cache
-        ::Rails.cache
-      end
-    end
+    @@rails_cache = nil
+    mattr_reader :rails_cache
 
     protected
       def rails_cache
