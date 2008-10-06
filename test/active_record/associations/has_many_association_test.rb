@@ -9,6 +9,13 @@ class HasManyAssociationTest < Test::Unit::TestCase
   end
 
   uses_mocha 'HasManyAssociationTest' do
+    def test_should_always_use_cache_for_all_instances_which_reference_the_same_record
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      expected = authors(:luca).cached_posts
+      actual = Author.first.cached_posts
+      assert_equal expected, actual
+    end
+    
     def test_should_expire_cache_on_update
       author = authors(:luca)
       old_cache_key = author.cache_key

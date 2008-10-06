@@ -1,3 +1,5 @@
+* Make sure cache is always used by all the instances which reference the same record
+
 * Made independent of Rails
 
 * Allow test suite to work without any active cache server
