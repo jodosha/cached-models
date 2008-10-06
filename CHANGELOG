@@ -1,3 +1,5 @@
+* Allow test suite to work without any active cache server
+
 * Enhanced AssociationCollection test coverage
 
 * ActiveRecord::Base#expire_cache_for now uses the new cache access API
