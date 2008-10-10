@@ -29,11 +29,4 @@ class BaseTest < Test::Unit::TestCase
     author.send(:cache_delete, Author.reflections[:cached_posts])
     assert_equal({:cached_posts => false}, author.send(:cached_associations))
   end
-
-  def test_should_load_without_rails
-    configuration = File.dirname(__FILE__) + '/../../config/cached_models.rb'
-    options = eval IO.read(configuration), binding, configuration
-    cache = ActiveSupport::Cache.lookup_store(options)
-    assert_kind_of ActiveSupport::Cache::Store, cache
-  end
 end
