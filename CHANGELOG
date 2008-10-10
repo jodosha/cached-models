@@ -1,3 +1,5 @@
+* Added dist related Rake tasks
+
 * Added gem related files
 
 * Added Git related Rake tasks

@@ -2,6 +2,7 @@ require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
 
+version = '0.0.2'
 repositories = %w( origin rubyforge )
 
 desc 'Default: run unit tests.'
@@ -21,6 +22,30 @@ Rake::RDocTask.new(:rdoc) do |rdoc|
   rdoc.options << '--line-numbers' << '--inline-source'
   rdoc.rdoc_files.include('README')
   rdoc.rdoc_files.include('lib/**/*.rb')
+end
+
+desc 'Build and install the gem (useful for development purposes).'
+task :install do
+  system "gem build cached-models.gemspec"
+  system "sudo gem uninstall cached-models"
+  system "sudo gem install --local --no-rdoc --no-ri cached-models-#{version}.gem"
+  system "rm cached-models-*.gem"
+end
+
+desc 'Build and prepare files for release.'
+task :dist => :clean do
+  require 'cached-models'
+  system "gem build cached-models.gemspec"
+  system "cd .. && tar -czf cached-models-#{version}.tar.gz cached_models"
+  system "cd .. && tar -cjf cached-models-#{version}.tar.bz2 cached_models"
+  system "cd .. && mv cached-models-* cached_models"
+end
+
+desc 'Clean the working copy from release files.'
+task :clean do
+  system "rm cached-models-#{version}.gem"     if File.exist? "cached-models-#{version}.gem"
+  system "rm cached-models-#{version}.tar.gz"  if File.exist? "cached-models-#{version}.tar.gz"
+  system "rm cached-models-#{version}.tar.bz2" if File.exist? "cached-models-#{version}.tar.bz2"
 end
 
 desc 'Show the file list for the gemspec file'
