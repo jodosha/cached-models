@@ -49,14 +49,41 @@ Example 3
 
 = Install
 
-$ ./script/plugin install git://github.com/jodosha/cached_models.git
+There are three ways to install CachedModels
 
+Gemified plugin:
+
+  environment.rb
+
+    Rails::Initializer.run do |config|
+      config.gem 'cached-models'
+    end
+
+  $ (sudo) rake gems:install
+  $ rake gems:unpack
+
+Rails plugin:
+
+  $ ./script/plugin install git://github.com/jodosha/cached-models.git
+
+Standalone:
+
+  $ (sudo) gem install cached-models
+  
+  in your project:
+  
+    require 'rubygems'
+    require 'activerecord'
+    require 'cached-models'
+
+    ActiveRecord::Base.rails_cache = ActiveSupport::Cache.lookup_store(:mem_cache_store, 'localhost')
+  
 
 
 = Contribute
 
 * Check out the code and test it:
-  $ git clone git://github.com/jodosha/cached_models.git
+  $ git clone git://github.com/jodosha/cached-models.git
   $ rake cached_models
 
 * Create a ticket to the {Sushistar Lighthouse page}[http://sushistar.lighthouseapp.com]
