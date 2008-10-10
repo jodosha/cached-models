@@ -1,3 +1,5 @@
+* Added Git related Rake tasks
+
 * Removed default configuration for cache lookup
 
 * Make sure cache is always used by all the instances which reference the same record
