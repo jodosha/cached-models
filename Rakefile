@@ -23,6 +23,12 @@ Rake::RDocTask.new(:rdoc) do |rdoc|
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
 
+desc 'Show the file list for the gemspec file'
+task :files do
+  puts "Files:\n #{Dir['**/*'].reject {|f| File.directory?(f)}.sort.inspect}"
+  puts "Test files:\n #{Dir['test/**/*_test.rb'].reject {|f| File.directory?(f)}.sort.inspect}"
+end
+
 namespace :git do
   desc 'Push local Git commits to all remote centralized repositories.'
   task :push do

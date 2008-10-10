@@ -1,3 +1,5 @@
+* Added gem related files
+
 * Added Git related Rake tasks
 
 * Removed default configuration for cache lookup
