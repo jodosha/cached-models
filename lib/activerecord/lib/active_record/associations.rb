@@ -306,6 +306,27 @@ module ActiveRecord
         end
       end
 
+      def has_and_belongs_to_many(association_id, options = {}, &extension)
+        reflection = create_has_and_belongs_to_many_reflection(association_id, options, &extension)
+
+        add_multiple_associated_validation_callbacks(reflection.name) unless options[:validate] == false
+        add_multiple_associated_save_callbacks(reflection.name)
+        collection_accessor_methods(reflection, HasAndBelongsToManyAssociation, options)
+
+        # Don't use a before_destroy callback since users' before_destroy
+        # callbacks will be executed after the association is wiped out.
+        old_method = "destroy_without_habtm_shim_for_#{reflection.name}"
+        class_eval <<-end_eval unless method_defined?(old_method)
+          alias_method :#{old_method}, :destroy_without_callbacks
+          def destroy_without_callbacks
+            #{reflection.name}.clear
+            #{old_method}
+          end
+        end_eval
+
+        add_association_callbacks(reflection.name, options)
+      end
+
       def collection_accessor_methods(reflection, association_proxy_class, options, writer = true)
         collection_reader_method(reflection, association_proxy_class, options)
 

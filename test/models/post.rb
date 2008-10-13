@@ -4,4 +4,5 @@ class Post < ActiveRecord::Base
   has_many :comments
   has_many :tags, :as => :taggable
   has_many :cached_tags, :as => :taggable, :class_name => 'Tag', :cached => true
+  has_and_belongs_to_many :categories
 end
