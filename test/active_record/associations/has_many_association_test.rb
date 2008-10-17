@@ -121,6 +121,12 @@ class HasManyAssociationTest < Test::Unit::TestCase
       posts = authors(:luca).cached_posts
       assert_equal posts, authors(:luca).cached_posts
     end
+
+    def test_should_safely_use_pagination
+      cache.expects(:fetch).with("#{cache_key}/cached_posts").returns association_proxy
+      posts = authors(:luca).cached_posts.paginate(:all, :page => 1, :per_page => 1)
+      assert_equal [ posts_by_author(:luca).first ], posts
+    end
     
     def test_should_reload_association_and_refresh_the_cache_on_force_reload
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns(posts_by_author(:luca))

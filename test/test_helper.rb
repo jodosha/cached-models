@@ -17,6 +17,28 @@ require 'post'
 Test::Unit::TestCase.fixture_path = File.dirname(__FILE__) + "/fixtures"
 ActionController::IntegrationTest.fixture_path = Test::Unit::TestCase.fixture_path
 
+module WillPaginate #:nodoc:
+  def paginate(*args)
+    options = args.extract_options!
+    current_page, per_page = options[:page], options[:per_page]
+    offset = (current_page - 1) * per_page
+
+    count_options = options.except :page, :per_page
+    find_options = count_options.except(:count).update(:offset => offset, :limit => per_page) 
+
+    args << find_options
+    @reflection.klass.find(*args)
+  end
+end
+
+module ActiveRecord
+  module Associations
+    class AssociationCollection < AssociationProxy #:nodoc:
+      include WillPaginate
+    end
+  end
+end
+
 class Test::Unit::TestCase
   self.use_transactional_fixtures = true
   self.use_instantiated_fixtures  = false

@@ -4,22 +4,23 @@ module ActiveRecord
   module Associations
     class AssociationCollection < AssociationProxy #:nodoc:
       def find(*args)
+        options       = args.extract_options!
         expects_array = args.first.kind_of?(Array)
-        ids           = args.flatten.compact.uniq.map(&:to_i)
+        args          = args.flatten.compact.uniq
 
-        if @reflection.options[:cached]
+        if @reflection.options[:cached] && !args.first.is_a?(Symbol)
           result = @owner.send(:cache_read, @reflection)
           if result
-            result = result.select { |record| ids.include? record.id }
+            result = result.select { |record| args.map(&:to_i).include? record.id }
             result = expects_array ? result : result.first
+
             return result
           end
         end
 
-        options = args.extract_options!
-
         # If using a custom finder_sql, scan the entire collection.
         if @reflection.options[:finder_sql]
+          ids = args.flatten.compact.uniq.map(&:to_i)
           if ids.size == 1
             id = ids.first
             record = load_target.detect { |r| id == r.id }
