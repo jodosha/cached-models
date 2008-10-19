@@ -1,5 +1,3 @@
-ENV["RAILS_ENV"] = "test"
-
 require 'test/unit'
 require 'rubygems'
 require 'active_support'
@@ -61,4 +59,20 @@ def uses_mocha(description)
   yield
 rescue LoadError
   $stderr.puts "Skipping #{description} tests. `gem install mocha` and try again."
+end
+
+if ENV['SKIP_MOCHA'] == 'true'
+  class Object
+    def expects(*args)
+      self
+    end
+
+    def method_missing(method_name, *args, &block)
+    end
+  end
+
+  class NilClass
+    def method_missing(method_name, *args, &block)
+    end
+  end
 end

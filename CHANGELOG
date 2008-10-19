@@ -1,3 +1,7 @@
+* Make sure tests suite runs in 'test' environment. Introduced SKIP_MOCHA env variable, in order to run tests directly on cache
+
+  $ rake cached_models SKIP_MOCHA=true
+
 * Bypass cache for will_paginate on association collection
 
   author.posts.paginate(:all, :page => 1, :per_page => 10)
