@@ -1,4 +1,6 @@
-* Don't instantiate ivar when rean from AssociationCollection if options[:cached] == true
+* Fixed typos in CHANGELOG and README
+
+* Don't instantiate ivar when read from AssociationCollection if options[:cached] == true
 
 * Reduced by half cache lookups when read from AssociationCollection
 
