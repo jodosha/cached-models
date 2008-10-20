@@ -1,3 +1,5 @@
+* Fixed Mocha expectations
+
 * Fixed clear, delete and destroy cases for AssociationCollection
 
   author.posts.delete(post)

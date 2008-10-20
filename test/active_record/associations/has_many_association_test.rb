@@ -21,7 +21,8 @@ class HasManyAssociationTest < Test::Unit::TestCase
       old_cache_key = author.cache_key
 
       cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-      cache.expects(:delete).with("#{cache_key}/cached_posts").returns true
+      # cache.expects(:delete).with("#{cache_key}/cached_posts").returns true
+      # cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").returns true
 
       author.cached_posts # force cache loading
       author.update_attributes :first_name => author.first_name.upcase
@@ -174,6 +175,9 @@ class HasManyAssociationTest < Test::Unit::TestCase
 
     def test_should_not_use_cache_when_pushing_element_to_association_belonging_to_anotner_model_on_false_cached_option
       cache.expects(:delete).with("#{blogs(:weblog).cache_key}/posts").never
+      cache.expects(:delete).with("#{cache_key}/cached_posts").returns true
+      cache.expects(:delete).with("#{cache_key}/cached_posts_with_comments").returns true
+      cache.expects(:delete).with("#{posts(:cached_models).cache_key}/cached_tags").returns true
       post = blogs(:weblog).posts.last
       blogs(:blog).posts << post
 
