@@ -251,11 +251,15 @@ module ActiveRecord
         end
 
         if options[:cached]
-          method_name = "belongs_to_after_save_for_#{reflection.name}".to_sym
-          define_method(method_name) do
+          after_save_method_name = "belongs_to_after_save_for_#{reflection.name}".to_sym
+          after_destroy_method_name = "belongs_to_after_destroy_for_#{reflection.name}".to_sym
+          define_method(after_save_method_name) do
             send(reflection.name).expire_cache_for(self.class.name)
           end
-          after_save method_name
+
+          alias_method after_destroy_method_name, after_save_method_name
+          after_save after_save_method_name
+          after_destroy after_destroy_method_name
         end
 
         add_single_associated_validation_callbacks(reflection.name) if options[:validate] == true
