@@ -199,31 +199,6 @@ class HasManyAssociationTest < Test::Unit::TestCase
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts
     end
 
-    def test_should_refresh_caches_when_pushing_element_to_association_belonging_to_another_model
-      cache.expects(:fetch).with("#{authors(:chuck).cache_key}/cached_posts").times(2).returns association_proxy(:chuck)
-      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-
-      post = authors(:chuck).cached_posts.last
-      authors(:luca).cached_posts << post
-
-      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
-      assert_equal posts_by_author(:chuck), authors(:chuck).cached_posts
-    end
-
-    def test_should_refresh_caches_when_pushing_element_to_polymorphic_association_belonging_to_another_model
-      cache.expects(:fetch).with("#{posts(:welcome).cache_key}/cached_tags").times(2).returns tags_association_proxy
-      cache.expects(:fetch).with("#{posts(:cached_models).cache_key}/cached_tags").times(2).returns tags_association_proxy(:cached_models)
-      tag = posts(:welcome).cached_tags.last
-
-      posts(:cached_models).cached_tags << tag
-
-      # NOTE for some weird reason the assertion fails, even if the collections are equals.
-      # I forced the comparision between the ids.
-      assert_equal tags_by_post(:cached_models).map(&:id).sort,
-        posts(:cached_models).cached_tags.map(&:id).sort
-      assert_equal tags_by_post(:welcome), posts(:welcome).cached_tags
-    end
-
     def test_should_not_use_cache_when_pushing_element_to_association_on_false_cached_option
       cache.expects(:write).never
 
@@ -245,34 +220,6 @@ class HasManyAssociationTest < Test::Unit::TestCase
       posts(:cached_models).tags << tag
       
       assert_equal tags_by_post(:cached_models), posts(:cached_models).tags
-    end
-    
-    def test_should_update_cache_when_pushing_element_with_build
-      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-
-      author = authors(:luca)
-      post = author.cached_posts.build post_options
-      post.save
-      
-      assert_equal posts_by_author(:luca), author.cached_posts
-    end
-    
-    def test_should_update_cache_when_pushing_element_with_create
-      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-
-      author = authors(:luca)
-      author.cached_posts.create post_options(:title => "CM Overview")
-      
-      assert_equal posts_by_author(:luca), author.cached_posts
-    end
-
-    def test_should_update_cache_when_pushing_element_with_create_bang_method
-      cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
-
-      author = authors(:luca)
-      author.cached_posts.create! post_options(:title => "CM Overview!!")
-
-      assert_equal posts_by_author(:luca), author.cached_posts
     end
 
     def test_should_update_cache_when_deleting_element_from_collection
@@ -346,6 +293,61 @@ class HasManyAssociationTest < Test::Unit::TestCase
 
       post = posts_by_author(:luca).first
       assert authors(:luca).cached_posts.include?(post)
+    end
+  end
+
+  uses_memcached 'HasManyAssociationTest' do
+    def test_should_refresh_caches_when_pushing_element_to_association_belonging_to_another_model
+      # cache.expects(:fetch).with("#{authors(:chuck).cache_key}/cached_posts").times(2).returns association_proxy(:chuck)
+      # cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+
+      post = authors(:chuck).cached_posts.last
+      authors(:luca).cached_posts << post
+
+      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+      assert_equal posts_by_author(:chuck), authors(:chuck).cached_posts
+    end
+
+    def test_should_refresh_caches_when_pushing_element_to_polymorphic_association_belonging_to_another_model
+      # cache.expects(:fetch).with("#{posts(:welcome).cache_key}/cached_tags").times(2).returns tags_association_proxy
+      # cache.expects(:fetch).with("#{posts(:cached_models).cache_key}/cached_tags").times(2).returns tags_association_proxy(:cached_models)
+      tag = posts(:welcome).cached_tags.last
+
+      posts(:cached_models).cached_tags << tag
+
+      # NOTE for some weird reason the assertion fails, even if the collections are equals.
+      # I forced the comparision between the ids.
+      assert_equal tags_by_post(:cached_models).map(&:id).sort,
+        posts(:cached_models).cached_tags.map(&:id).sort
+      assert_equal tags_by_post(:welcome), posts(:welcome).cached_tags
+    end
+
+    def test_should_update_cache_when_pushing_element_with_build
+      # cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+
+      author = authors(:luca)
+      post = author.cached_posts.build post_options
+      post.save
+
+      assert_equal posts_by_author(:luca), author.cached_posts
+    end
+
+    def test_should_update_cache_when_pushing_element_with_create
+      # cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+
+      author = authors(:luca)
+      author.cached_posts.create post_options(:title => "CM Overview")
+
+      assert_equal posts_by_author(:luca), author.cached_posts
+    end
+
+    def test_should_update_cache_when_pushing_element_with_create_bang_method
+      # cache.expects(:fetch).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+
+      author = authors(:luca)
+      author.cached_posts.create! post_options(:title => "CM Overview!!")
+
+      assert_equal posts_by_author(:luca), author.cached_posts
     end
   end
 

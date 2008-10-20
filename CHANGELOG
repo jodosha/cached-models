@@ -1,3 +1,5 @@
+* Fixed concurrency issues, using Thread#current to store cached_associations instead of ivar
+
 * Make sure tests suite runs in 'test' environment. Introduced SKIP_MOCHA env variable, in order to run tests directly on cache
 
   $ rake cached_models SKIP_MOCHA=true

@@ -1,3 +1,5 @@
+RAILS_ENV = "test" unless defined? RAILS_ENV
+
 require 'test/unit'
 require 'rubygems'
 require 'active_support'
@@ -59,6 +61,14 @@ def uses_mocha(description)
   yield
 rescue LoadError
   $stderr.puts "Skipping #{description} tests. `gem install mocha` and try again."
+end
+
+def uses_memcached(description)
+  require 'memcache'
+  MemCache.new('localhost').stats
+  yield
+rescue MemCache::MemCacheError
+  $stderr.puts "Skipping #{test_name} tests. Start memcached and try again."
 end
 
 if ENV['SKIP_MOCHA'] == 'true'
