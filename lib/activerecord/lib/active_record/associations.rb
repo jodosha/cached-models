@@ -281,7 +281,7 @@ module ActiveRecord
 
           unless association.respond_to?(:loaded?)
             association = association_proxy_class.new(self, reflection)
-            instance_variable_set(ivar, association)
+            instance_variable_set(ivar, association) unless options[:cached]
           end
 
           if force_reload
