@@ -1,3 +1,11 @@
+* Reduced by half cache lookups when read from AssociationCollection
+
+  # BEFORE
+  author.posts # => cache read + cache fetch
+
+  # NOW
+  author.posts # => cache fetch
+
 * Fixed Mocha expectations
 
 * Fixed clear, delete and destroy cases for AssociationCollection

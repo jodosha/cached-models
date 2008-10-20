@@ -274,7 +274,7 @@ module ActiveRecord
           force_reload = params.first unless params.empty?
 
           association = if options[:cached]
-            cache_read(reflection)
+            nil
           else
             instance_variable_get(ivar) if instance_variable_defined?(ivar)
           end
