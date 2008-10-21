@@ -1,3 +1,7 @@
+* Use loaded collection, instead of read from cache, when use scoped find form AssociationCollection
+
+  author.posts.find(1) # no cache read for #find
+
 * Use loaded collection, instead of read from cache, when use #size, #empty? and #any? from AssociationCollection. Added support for :uniq option.
 
 * Reduced cache overhead using read instead of fetch for access to AssociationCollection. Enhanced Mocha expectactions.

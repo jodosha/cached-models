@@ -33,14 +33,14 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
 
     def test_should_use_cache_when_find_with_scope
-      cache.expects(:read).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:read).with("#{cache_key}/cached_posts").returns association_proxy
 
       post = authors(:luca).cached_posts.find(posts(:welcome).id)
       assert_equal posts(:welcome), post
     end
 
     def test_should_use_cache_when_find_with_scope_using_multiple_ids
-      cache.expects(:read).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:read).with("#{cache_key}/cached_posts").returns association_proxy
 
       ids = posts_by_author(:luca).map(&:id)
       assert_equal posts_by_author(:luca), authors(:luca).cached_posts.find(ids)

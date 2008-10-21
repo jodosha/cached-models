@@ -9,13 +9,8 @@ module ActiveRecord
         args          = args.flatten.compact.uniq
 
         if @reflection.options[:cached] && !args.first.is_a?(Symbol)
-          result = @owner.send(:cache_read, @reflection)
-          if result
-            result = result.select { |record| args.map(&:to_i).include? record.id }
-            result = expects_array ? result : result.first
-
-            return result
-          end
+          result = self.select { |record| args.map(&:to_i).include? record.id }
+          return expects_array ? result : result.first
         end
 
         # If using a custom finder_sql, scan the entire collection.
