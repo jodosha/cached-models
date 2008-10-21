@@ -113,8 +113,13 @@ module ActiveRecord
       # and you need to fetch that collection afterwards, it'll take one less SELECT query if you use length.
       def size
         if @reflection.options[:cached]
-          result = @owner.send(:cache_read, @reflection)
-          return result.to_ary.size if result
+          returning nil do 
+            if @reflection.options[:uniq]
+              self.to_ary.uniq.size
+            else
+              self.to_ary.size
+            end
+          end
         end
 
         if @owner.new_record? || (loaded? && !@reflection.options[:uniq])

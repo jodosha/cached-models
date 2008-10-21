@@ -203,9 +203,15 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
 
     def test_should_use_cache_for_collection_size
-      cache.expects(:read).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:read).with("#{cache_key}/cached_posts").returns association_proxy
 
       assert_equal posts_by_author(:luca).size, authors(:luca).cached_posts.size
+    end
+
+    def test_should_use_cache_and_return_uniq_records_for_collection_size_on_uniq_option
+      cache.expects(:read).with("#{cache_key}/uniq_cached_posts").never # wuh?!
+
+      assert_equal posts_by_author(:luca).size, authors(:luca).uniq_cached_posts.size
     end
 
     def test_should_use_cache_for_collection_length
@@ -215,13 +221,13 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
 
     def test_should_use_cache_for_collection_empty
-      cache.expects(:read).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:read).with("#{cache_key}/cached_posts").returns association_proxy
 
       assert_equal posts_by_author(:luca).empty?, authors(:luca).cached_posts.empty?
     end
 
     def test_should_use_cache_for_collection_any
-      cache.expects(:read).with("#{cache_key}/cached_posts").times(2).returns association_proxy
+      cache.expects(:read).with("#{cache_key}/cached_posts").returns association_proxy
 
       assert_equal posts_by_author(:luca).any?, authors(:luca).cached_posts.any?
     end
