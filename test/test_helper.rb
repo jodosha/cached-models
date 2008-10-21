@@ -68,7 +68,7 @@ def uses_memcached(description)
   MemCache.new('localhost').stats
   yield
 rescue MemCache::MemCacheError
-  $stderr.puts "Skipping #{test_name} tests. Start memcached and try again."
+  $stderr.puts "Skipping #{description} tests. Start memcached and try again."
 end
 
 if ENV['SKIP_MOCHA'] == 'true'

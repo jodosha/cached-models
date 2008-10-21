@@ -274,26 +274,26 @@ module ActiveRecord
           force_reload = params.first unless params.empty?
 
           association = if options[:cached]
-            nil
+            cache_read(reflection)
           else
             instance_variable_get(ivar) if instance_variable_defined?(ivar)
           end
 
           unless association.respond_to?(:loaded?)
             association = association_proxy_class.new(self, reflection)
-            instance_variable_set(ivar, association) unless options[:cached]
+            if options[:cached]
+              cache_write(reflection, association)
+            else
+              instance_variable_set(ivar, association)
+            end
           end
 
           if force_reload
             association.reload
-            cache_delete(reflection) if options[:cached]
+            cache_write(reflection, association) if options[:cached]
           end
 
-          if options[:cached]
-            cache_fetch(reflection, association)
-          else
-            association
-          end
+          association
         end
 
         method_name = "#{reflection.name.to_s.singularize}_ids"

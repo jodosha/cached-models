@@ -1,3 +1,11 @@
+* Reduced cache overhead using read instead of fetch for access to AssociationCollection. Enhanced Mocha expectactions.
+
+  # BEFORE
+  author.posts # => cache fetch
+  
+  # NOW
+  author.posts # => cache read
+
 * Fixed typos in CHANGELOG and README
 
 * Don't instantiate ivar when read from AssociationCollection if options[:cached] == true

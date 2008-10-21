@@ -36,7 +36,10 @@ module ActiveRecord
       end
 
       def cache_write(reflection, value)
-        cached_associations[reflection.name] = rails_cache.write(reflection_cache_key(reflection), value)
+        # This is a workaround for:
+        # http://rails.lighthouseapp.com/projects/8994-ruby-on-rails/tickets/1239-railscachewrite-returns-false-with-memcachestore
+        rails_cache.write(reflection_cache_key(reflection), value)
+        cached_associations[reflection.name] = true
       end
 
       def cache_delete(reflection)
