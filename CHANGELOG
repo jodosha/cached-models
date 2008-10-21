@@ -1,3 +1,5 @@
+* Sugar syntax for AssociationCollection#size
+
 * Use loaded collection, instead of read from cache, when use scoped find form AssociationCollection
 
   author.posts.find(1) # no cache read for #find
