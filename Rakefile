@@ -2,7 +2,7 @@ require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
 
-version = '0.0.2'
+version = '0.0.3'
 repositories = %w( origin rubyforge )
 
 desc 'Default: run unit tests.'

@@ -1,8 +1,8 @@
 author: Luca Guidi
 email: guidi.luca@gmail.com
 homepage: http://lucaguidi.com/pages/cached_models
-summary: CachedModels provides to your models a transparent approach to use Rails internal caching mechanism.
-description: CachedModels provides to your models a transparent approach to use Rails internal caching mechanism.
+summary: CachedModels provides to your ActiveRecord models a transparent approach to use ActiveSupport caching mechanism.
+description: CachedModels provides to your ActiveRecord models a transparent approach to use ActiveSupport caching mechanism.
 license: MIT
-rails_version: 2.1.1+
-version: 0.0.1
+rails_version: 2.1.0+
+version: 0.0.3
