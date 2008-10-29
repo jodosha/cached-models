@@ -2,14 +2,16 @@ RAILS_ENV = "test" unless defined? RAILS_ENV
 
 require 'test/unit'
 require 'rubygems'
+
+# FIXME load path
+require File.dirname(__FILE__) + '/../../../../config/environment'
+
 require 'active_support'
 require 'action_controller'
 require 'active_support/test_case'
 require 'active_record/fixtures'
 require 'action_controller/integration'
 
-# FIXME load path
-require File.dirname(__FILE__) + '/../../../../config/environment'
 $:.unshift File.dirname(__FILE__) + '/models'
 require 'author'
 require 'post'
