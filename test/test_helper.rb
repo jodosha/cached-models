@@ -18,6 +18,18 @@ require 'post'
 
 Test::Unit::TestCase.fixture_path = File.dirname(__FILE__) + "/fixtures"
 ActionController::IntegrationTest.fixture_path = Test::Unit::TestCase.fixture_path
+silence_warnings do
+  cache = ActiveSupport::Cache.lookup_store :mem_cache_store
+  Object.const_set "RAILS_CACHE", cache
+  ActiveRecord::Base.rails_cache = cache
+end
+
+begin
+  require 'memcache'
+  MemCache.new('localhost').stats
+rescue MemCache::MemCacheError
+  $stderr.puts "[WARNING] Memcache is not running!"
+end
 
 module WillPaginate #:nodoc:
   def paginate(*args)
@@ -63,14 +75,6 @@ def uses_mocha(description)
   yield
 rescue LoadError
   $stderr.puts "Skipping #{description} tests. `gem install mocha` and try again."
-end
-
-def uses_memcached(description)
-  require 'memcache'
-  MemCache.new('localhost').stats
-  yield
-rescue MemCache::MemCacheError
-  $stderr.puts "Skipping #{description} tests. Start memcached and try again."
 end
 
 if ENV['SKIP_MOCHA'] == 'true'

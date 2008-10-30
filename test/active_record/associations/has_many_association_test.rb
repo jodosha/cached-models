@@ -216,85 +216,83 @@ class HasManyAssociationTest < Test::Unit::TestCase
     end
   end
 
-  uses_memcached 'HasManyAssociationTest' do
-    def test_should_refresh_caches_when_pushing_element_to_association_belonging_to_another_model
-      post = authors(:chuck).cached_posts.last
-      authors(:luca).cached_posts << post
-      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
-      assert_equal posts_by_author(:chuck), authors(:chuck).cached_posts
-    end
+  def test_should_refresh_caches_when_pushing_element_to_association_belonging_to_another_model
+    post = authors(:chuck).cached_posts.last
+    authors(:luca).cached_posts << post
+    assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+    assert_equal posts_by_author(:chuck), authors(:chuck).cached_posts
+  end
 
-    def test_should_refresh_caches_when_pushing_element_to_polymorphic_association_belonging_to_another_model
-      tag = posts(:welcome).cached_tags.last
-      posts(:cached_models).cached_tags << tag
+  def test_should_refresh_caches_when_pushing_element_to_polymorphic_association_belonging_to_another_model
+    tag = posts(:welcome).cached_tags.last
+    posts(:cached_models).cached_tags << tag
 
-      # NOTE for some weird reason the assertion fails, even if the collections are equals.
-      # I forced the comparision between the ids.
-      assert_equal tags_by_post(:cached_models).map(&:id).sort,
-        posts(:cached_models).cached_tags.map(&:id).sort
-    end
+    # NOTE for some weird reason the assertion fails, even if the collections are equals.
+    # I forced the comparision between the ids.
+    assert_equal tags_by_post(:cached_models).map(&:id).sort,
+      posts(:cached_models).cached_tags.map(&:id).sort
+  end
 
-    def test_should_update_cache_when_pushing_element_with_build
-      author = authors(:luca)
-      post = author.cached_posts.build post_options
-      post.save
-      assert_equal posts_by_author(:luca), author.cached_posts
-    end
+  def test_should_update_cache_when_pushing_element_with_build
+    author = authors(:luca)
+    post = author.cached_posts.build post_options
+    post.save
+    assert_equal posts_by_author(:luca), author.cached_posts
+  end
 
-    def test_should_update_cache_when_pushing_element_with_create
-      author = authors(:luca)
-      author.cached_posts.create post_options(:title => "CM Overview")
-      assert_equal posts_by_author(:luca), author.cached_posts
-    end
+  def test_should_update_cache_when_pushing_element_with_create
+    author = authors(:luca)
+    author.cached_posts.create post_options(:title => "CM Overview")
+    assert_equal posts_by_author(:luca), author.cached_posts
+  end
 
-    def test_should_update_cache_when_pushing_element_with_create_bang_method
-      author = authors(:luca)
-      author.cached_posts.create! post_options(:title => "CM Overview!!")
-      assert_equal posts_by_author(:luca), author.cached_posts
-    end
+  def test_should_update_cache_when_pushing_element_with_create_bang_method
+    author = authors(:luca)
+    author.cached_posts.create! post_options(:title => "CM Overview!!")
+    assert_equal posts_by_author(:luca), author.cached_posts
+  end
 
-    def test_should_expire_cache_when_delete_all_elements_from_collection
-      authors(:luca).cached_posts.delete_all
-      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
-    end
+  def test_should_expire_cache_when_delete_all_elements_from_collection
+    authors(:luca).cached_posts.delete_all
+    assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+  end
 
-    def test_should_expire_cache_when_destroy_all_elements_from_collection
-      authors(:luca).cached_posts.destroy_all
-      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
-    end
+  def test_should_expire_cache_when_destroy_all_elements_from_collection
+    authors(:luca).cached_posts.destroy_all
+    assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+  end
 
-    def test_should_update_cache_when_clearing_collection
-      authors(:luca).cached_posts.clear      
-      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
-    end
+  def test_should_update_cache_when_clearing_collection
+    authors(:luca).cached_posts.clear
+    assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+  end
 
-    def test_should_update_cache_when_clearing_collection_with_dependent_destroy_option
-      authors(:luca).cached_dependent_posts.clear
-      assert_equal posts_by_author(:luca), authors(:luca).cached_dependent_posts
-    end
+  def test_should_update_cache_when_clearing_collection_with_dependent_destroy_option
+    authors(:luca).cached_dependent_posts.clear
+    assert_equal posts_by_author(:luca), authors(:luca).cached_dependent_posts
+  end
 
-    def test_should_update_cache_when_deleting_element_from_collection
-      authors(:luca).cached_posts.delete(posts_by_author(:luca).first)
-      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
-    end
+  def test_should_update_cache_when_deleting_element_from_collection
+    authors(:luca).cached_posts.delete(posts_by_author(:luca).first)
+    assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+  end
 
-    def test_should_update_cache_when_replace_collection
-      post = create_post; post.save
-      posts = [ posts_by_author(:luca).first, post ]
-      authors(:luca).cached_posts.replace(posts)
-      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
-    end
+  def test_should_update_cache_when_replace_collection
+    post = create_post; post.save
+    posts = [ posts_by_author(:luca).first, post ]
+    authors(:luca).cached_posts.replace(posts)
+    assert_equal posts_by_author(:luca), authors(:luca).cached_posts
+  end
 
-    def test_should_not_expire_cache_on_update_on_missing_updated_at
-      author = authors(:luca)
-      old_cache_key = author.cache_key
+  def test_should_not_expire_cache_on_update_on_missing_updated_at
+    author = authors(:luca)
+    old_cache_key = author.cache_key
 
-      author.cached_posts # force cache loading
-      author.update_attributes :first_name => author.first_name.upcase
+    author.cached_posts # force cache loading
+    author.update_attributes :first_name => author.first_name.upcase
 
-      # assert_not_equal old_cache_key, author.cache_key
-      assert_equal posts_by_author(:luca), authors(:luca).cached_posts
-    end
+    # assert_not_equal old_cache_key, author.cache_key
+    assert_equal posts_by_author(:luca), authors(:luca).cached_posts
   end
 
   private

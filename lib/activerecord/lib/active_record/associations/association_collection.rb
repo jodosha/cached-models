@@ -54,7 +54,7 @@ module ActiveRecord
         result = true
         load_target if @owner.new_record?
 
-        @owner.transaction do
+        transaction do
           flatten_deeper(records).each do |record|
             raise_on_type_mismatch(record)
             add_record_to_target_with_callbacks(record) do |r|
@@ -68,12 +68,18 @@ module ActiveRecord
         result && self
       end
 
-      # Remove +records+ from this association.  Does not destroy +records+.
+      # Removes +records+ from this association calling +before_remove+ and
+      # +after_remove+ callbacks.
+      #
+      # This method is abstract in the sense that +delete_records+ has to be
+      # provided by descendants. Note this method does not imply the records
+      # are actually removed from the database, that depends precisely on
+      # +delete_records+. They are in any case removed from the collection.
       def delete(*records)
         records = flatten_deeper(records)
         records.each { |record| raise_on_type_mismatch(record) }
 
-        @owner.transaction do
+        transaction do
           records.each { |record| callback(:before_remove, record) }
 
           old_records = records.reject {|r| r.new_record? }
@@ -94,7 +100,7 @@ module ActiveRecord
 
         if @reflection.options[:dependent] && @reflection.options[:dependent] == :destroy
           destroy_all
-        else
+        else 
           delete_all
         end
 
@@ -103,9 +109,16 @@ module ActiveRecord
         self
       end
 
-      # Returns the size of the collection by executing a SELECT COUNT(*) query if the collection hasn't been loaded and
-      # calling collection.size if it has. If it's more likely than not that the collection does have a size larger than zero
-      # and you need to fetch that collection afterwards, it'll take one less SELECT query if you use length.
+      # Returns the size of the collection by executing a SELECT COUNT(*)
+      # query if the collection hasn't been loaded, and calling
+      # <tt>collection.size</tt> if it has.
+      #
+      # If the collection has been already loaded +size+ and +length+ are
+      # equivalent. If not and you are going to need the records anyway
+      # +length+ will take one less query. Otherwise +size+ is more efficient.
+      #
+      # This method is abstract in the sense that it relies on
+      # +count_records+, which is a method descendants have to provide.
       def size
         if @reflection.options[:cached]
           returning result = self.to_ary do
@@ -115,6 +128,8 @@ module ActiveRecord
 
         if @owner.new_record? || (loaded? && !@reflection.options[:uniq])
           @target.size
+        elsif !loaded? && @reflection.options[:group]
+          load_target.size
         elsif !loaded? && !@reflection.options[:uniq] && @target.is_a?(Array)
           unsaved_records = @target.select { |r| r.new_record? }
           unsaved_records.size + count_records
