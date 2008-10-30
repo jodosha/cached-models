@@ -24,82 +24,10 @@ module ActiveRecord
         add_has_many_cache_callbacks if options[:cached]
       end
 
+      alias_method :active_record_belongs_to, :belongs_to
       def belongs_to(association_id, options = {}) #:nodoc:
-        reflection = create_belongs_to_reflection(association_id, options)
-
-        ivar = "@#{reflection.name}"
-
-        if reflection.options[:polymorphic]
-          association_accessor_methods(reflection, BelongsToPolymorphicAssociation)
-
-          method_name = "polymorphic_belongs_to_before_save_for_#{reflection.name}".to_sym
-          define_method(method_name) do
-            association = instance_variable_get(ivar) if instance_variable_defined?(ivar)
-
-            if association && association.target
-              if association.new_record?
-                association.save(true)
-              end
-
-              if association.updated?
-                self[reflection.primary_key_name] = association.id
-                self[reflection.options[:foreign_type]] = association.class.base_class.name.to_s
-              end
-            end
-          end
-          before_save method_name
-        else
-          association_accessor_methods(reflection, BelongsToAssociation)
-          association_constructor_method(:build,  reflection, BelongsToAssociation)
-          association_constructor_method(:create, reflection, BelongsToAssociation)
-
-          method_name = "belongs_to_before_save_for_#{reflection.name}".to_sym
-          define_method(method_name) do
-            association = instance_variable_get(ivar) if instance_variable_defined?(ivar)
-
-            if !association.nil?
-              if association.new_record?
-                association.save(true)
-              end
-
-              if association.updated?
-                self[reflection.primary_key_name] = association.id
-              end
-            end
-          end
-          before_save method_name
-        end
-
-        # Create the callbacks to update counter cache
-        if options[:counter_cache]
-          cache_column = options[:counter_cache] == true ?
-            "#{self.to_s.underscore.pluralize}_count" :
-            options[:counter_cache]
-
-          method_name = "belongs_to_counter_cache_after_create_for_#{reflection.name}".to_sym
-          define_method(method_name) do
-            association = send(reflection.name)
-            association.class.increment_counter(cache_column, send(reflection.primary_key_name)) unless association.nil?
-          end
-          after_create method_name
-
-          method_name = "belongs_to_counter_cache_before_destroy_for_#{reflection.name}".to_sym
-          define_method(method_name) do
-            association = send(reflection.name)
-            association.class.decrement_counter(cache_column, send(reflection.primary_key_name)) unless association.nil?
-          end
-          before_destroy method_name
-
-          module_eval(
-            "#{reflection.class_name}.send(:attr_readonly,\"#{cache_column}\".intern) if defined?(#{reflection.class_name}) && #{reflection.class_name}.respond_to?(:attr_readonly)"
-          )
-        end
-
+        active_record_belongs_to(association_id, options)
         add_belongs_to_cache_callbacks(association_id) if options[:cached]
-
-        add_single_associated_validation_callbacks(reflection.name) if options[:validate] == true
-
-        configure_dependency_for_belongs_to(reflection)
       end
 
       def collection_reader_method(reflection, association_proxy_class, options)

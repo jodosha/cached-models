@@ -1,3 +1,5 @@
+* DRYed-up belongs_to definition
+
 * Make sure of use Memcached as test store. Compatibility changes for ActiveRecord 2.2.0
 
 * Make sure of require frameworks configured in environment.rb
