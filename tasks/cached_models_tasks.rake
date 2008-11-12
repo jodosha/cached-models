@@ -55,6 +55,7 @@ namespace :cached_models do
         t.string :title
         t.text :text
         t.datetime :published_at
+        t.integer :rating, :default => 0
 
         t.timestamps
       end
@@ -65,7 +66,7 @@ namespace :cached_models do
         t.timestamps
       end
 
-      create_table :categories_posts, :force => true do |t|
+      create_table :categories_posts, :force => true, :id => false do |t|
         t.integer :category_id
         t.integer :post_id
       end

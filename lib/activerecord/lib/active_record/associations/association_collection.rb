@@ -109,6 +109,19 @@ module ActiveRecord
         self
       end
 
+      def destroy_all #:nodoc:
+        transaction do
+          each { |record| record.destroy }
+        end
+
+        reset_target!
+
+        # TODO it should be achievable via callbacks
+        if @reflection.options[:cached] && @reflection.macro == :has_and_belongs_to_many
+          @owner.send(:cache_write, @reflection, self)
+        end
+      end
+
       # Returns the size of the collection by executing a SELECT COUNT(*)
       # query if the collection hasn't been loaded, and calling
       # <tt>collection.size</tt> if it has.

@@ -67,6 +67,20 @@ class Test::Unit::TestCase
     def cache
       ActiveRecord::Base.rails_cache
     end
+
+    def create_post(options = {})
+      Post.new({ :author_id => 1,
+        :title => 'CachedModels',
+        :text => 'Introduction to CachedModels plugin',
+        :published_at => 1.week.ago }.merge(options))
+    end
+
+    def post_options(options = {})
+      { :blog_id => blogs(:weblog).id,
+        :title => "Cached models review",
+        :text => "Cached models review..",
+        :published_at => 1.week.ago }.merge(options)
+    end
 end
 
 def uses_mocha(description)

@@ -1,3 +1,5 @@
+* has_and_belongs_to_many association support
+
 * Fix memory leak issue in cached_associations
 
 * DRYed-up belongs_to definition

@@ -1,3 +1,7 @@
 announcements:
   id: 1
   name: Announcements
+
+rails:
+  id: 2
+  name: rails

@@ -5,6 +5,7 @@ welcome:
   title: Welcome
   text: Welcome to my blog
   published_at: <%= 3.years.ago %>
+  rating: 3
 
 cached_models:
   id: 2
@@ -13,6 +14,7 @@ cached_models:
   title: Cached Models
   text: Cached Models plugin overview
   published_at: <%= 2.weeks.ago %>
+  rating: 5
 
 fight_club:
   id: 3
@@ -21,3 +23,4 @@ fight_club:
   title: Fight Club
   text: This is a Fight Club review
   published_at: <%= 1.week.ago %>
+  rating: 5

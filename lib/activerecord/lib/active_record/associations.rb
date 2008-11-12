@@ -2,6 +2,7 @@
 require File.dirname(__FILE__) + '/associations/association_proxy'
 require File.dirname(__FILE__) + '/associations/association_collection'
 require File.dirname(__FILE__) + '/associations/has_many_association'
+require File.dirname(__FILE__) + '/associations/has_and_belongs_to_many_association'
 
 module ActiveRecord
   module Associations
@@ -119,6 +120,29 @@ module ActiveRecord
 
       valid_keys_for_has_many_association << :cached
       valid_keys_for_belongs_to_association << :cached
+      # TODO uncomment when Rails 2.2.1 comes out
+      # valid_keys_for_has_and_belongs_to_many_association << :cached
+
+      # TODO remove when Rails 2.2.1 comes out
+      def create_has_and_belongs_to_many_reflection(association_id, options, &extension) #:nodoc:
+        options.assert_valid_keys(
+          :class_name, :table_name, :join_table, :foreign_key, :association_foreign_key,
+          :select, :conditions, :include, :order, :group, :limit, :offset,
+          :uniq,
+          :finder_sql, :delete_sql, :insert_sql,
+          :before_add, :after_add, :before_remove, :after_remove,
+          :extend, :readonly,
+          :validate, :cached
+        )
+
+        options[:extend] = create_extension_modules(association_id, extension, options[:extend])
+
+        reflection = create_reflection(:has_and_belongs_to_many, association_id, options, self)
+
+        reflection.options[:join_table] ||= join_table_name(undecorated_table_name(self.to_s), undecorated_table_name(reflection.class_name))
+
+        reflection
+      end
 
       def add_has_many_cache_callbacks
         method_name = :has_many_after_save_cache_expire
@@ -128,7 +152,7 @@ module ActiveRecord
           return unless self[:updated_at]
 
           self.class.reflections.each do |name, reflection|
-            cache_delete(reflection) if reflection.options[:cached]
+            expire_cache_for(reflection.class_name)
           end
         end
         after_save method_name
@@ -140,7 +164,9 @@ module ActiveRecord
         return if respond_to? after_save_method_name
 
         define_method(after_save_method_name) do
-          send(reflection_name).expire_cache_for(self.class.name)
+          returning owner = send(reflection_name) do
+            owner.expire_cache_for(self.class.name) unless owner.blank?
+          end
         end
 
         alias_method after_destroy_method_name, after_save_method_name
