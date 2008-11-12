@@ -1,3 +1,5 @@
+* Fix memory leak issue in cached_associations
+
 * DRYed-up belongs_to definition
 
 * Make sure of use Memcached as test store. Compatibility changes for ActiveRecord 2.2.0

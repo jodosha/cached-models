@@ -66,8 +66,7 @@ module ActiveRecord
       end
       
       def cached_associations
-        cached_associations = (Thread.current[:cached_associations] ||= {})
-        cached_associations[cache_key] ||= {}
+        Thread.current[:"#{cache_key}_cached_associations"] ||= {}
       end
   end
 end
