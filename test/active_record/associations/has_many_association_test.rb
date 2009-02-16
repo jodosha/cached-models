@@ -1,10 +1,11 @@
 require File.dirname(__FILE__) + '/../../test_helper'
 require 'active_record/associations/has_many_association'
 
-class HasManyAssociationTest < Test::Unit::TestCase
+class HasManyAssociationTest < ActiveSupport::TestCase
   include ActiveRecord::Associations
   
   def setup
+    load_schema
     cache.clear rescue nil
   end
 

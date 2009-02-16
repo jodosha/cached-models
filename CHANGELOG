@@ -1,3 +1,5 @@
+* Make test suite work with Rails 2.3.0
+
 * has_and_belongs_to_many association support
 
 * Fix memory leak issue in cached_associations

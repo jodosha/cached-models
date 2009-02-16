@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../test_helper'
 
-class BaseTest < Test::Unit::TestCase
+class BaseTest < ActiveSupport::TestCase
   fixtures :authors
 
   def test_should_have_cache

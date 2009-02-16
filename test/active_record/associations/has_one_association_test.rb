@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../../test_helper'
 
-class HasOneAssociationTest < Test::Unit::TestCase
+class HasOneAssociationTest < ActiveSupport::TestCase
   include ActiveRecord::Associations
 
   def test_should_not_raise_exception_when_use_has_one

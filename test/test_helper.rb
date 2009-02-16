@@ -1,27 +1,28 @@
-RAILS_ENV = "test" unless defined? RAILS_ENV
+ENV['RAILS_ENV'] = 'test'
+ENV['RAILS_ROOT'] ||= File.dirname(__FILE__) + '/../../../..'
 
 require 'test/unit'
-require 'rubygems'
-
-# FIXME load path
-require File.dirname(__FILE__) + '/../../../../config/environment'
-
-require 'active_support'
-require 'action_controller'
-require 'active_support/test_case'
+require File.expand_path(File.join(ENV['RAILS_ROOT'], 'config/environment.rb'))
 require 'active_record/fixtures'
-require 'action_controller/integration'
 
 $:.unshift File.dirname(__FILE__) + '/models'
 require 'author'
 require 'post'
 
-Test::Unit::TestCase.fixture_path = File.dirname(__FILE__) + "/fixtures"
-ActionController::IntegrationTest.fixture_path = Test::Unit::TestCase.fixture_path
 silence_warnings do
   cache = ActiveSupport::Cache.lookup_store :mem_cache_store
   Object.const_set "RAILS_CACHE", cache
   ActiveRecord::Base.rails_cache = cache
+end
+
+def load_schema
+  ActiveRecord::Base.logger = Logger.new(File.dirname(__FILE__) + "/debug.log")
+  ActiveRecord::Schema.verbose = false
+
+  ActiveRecord::Base.establish_connection :adapter => 'sqlite3', :dbfile => ':memory:'
+  load(File.dirname(__FILE__) + "/schema.rb")
+  fixtures = %w( addresses authors blogs posts categories categories_posts comments tags )
+  fixtures.each { |f| Fixtures.create_fixtures(ActiveSupport::TestCase.fixture_path, f) }
 end
 
 begin
@@ -53,10 +54,17 @@ module ActiveRecord
   end
 end
 
-class Test::Unit::TestCase
+class ActiveSupport::TestCase
+  include ActiveRecord::TestFixtures
+
+  self.fixture_path = File.expand_path(File.join(File.dirname(__FILE__), 'fixtures'))
   self.use_transactional_fixtures = true
   self.use_instantiated_fixtures  = false
   fixtures :all
+  
+  def setup
+    load_schema
+  end
   
   # Assert the given condition is false
   def assert_false(condition, message = nil)
@@ -80,8 +88,10 @@ class Test::Unit::TestCase
         :title => "Cached models review",
         :text => "Cached models review..",
         :published_at => 1.week.ago }.merge(options)
-    end
+    end    
 end
+
+ActionController::IntegrationTest.fixture_path = ActiveSupport::TestCase.fixture_path
 
 def uses_mocha(description)
   require 'rubygems'
