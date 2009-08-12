@@ -11,9 +11,6 @@ module ActiveRecord
         reflection = create_has_many_reflection(association_id, options, &extension)
 
         configure_dependency_for_has_many(reflection)
-
-        add_multiple_associated_validation_callbacks(reflection.name) unless options[:validate] == false
-        add_multiple_associated_save_callbacks(reflection.name)
         add_association_callbacks(reflection.name, reflection.options)
 
         if options[:through]
@@ -33,22 +30,20 @@ module ActiveRecord
 
       def collection_reader_method(reflection, association_proxy_class, options)
         define_method(reflection.name) do |*params|
-          ivar = "@#{reflection.name}"
-
           force_reload = params.first unless params.empty?
 
           association = if options[:cached]
             cache_read(reflection)
           else
-            instance_variable_get(ivar) if instance_variable_defined?(ivar)
+            association_instance_get(reflection.name)
           end
 
-          unless association.respond_to?(:loaded?)
+          unless association
             association = association_proxy_class.new(self, reflection)
             if options[:cached]
               cache_write(reflection, association)
             else
-              instance_variable_set(ivar, association)
+              association_instance_set(reflection.name, association)
             end
           end
 
@@ -79,8 +74,6 @@ module ActiveRecord
       def has_and_belongs_to_many(association_id, options = {}, &extension) #:nodoc:
         reflection = create_has_and_belongs_to_many_reflection(association_id, options, &extension)
 
-        add_multiple_associated_validation_callbacks(reflection.name) unless options[:validate] == false
-        add_multiple_associated_save_callbacks(reflection.name)
         collection_accessor_methods(reflection, HasAndBelongsToManyAssociation, options)
 
         # Don't use a before_destroy callback since users' before_destroy

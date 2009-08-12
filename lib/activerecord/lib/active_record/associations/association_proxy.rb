@@ -4,15 +4,10 @@ module ActiveRecord
   module Associations
     class AssociationProxy
       protected
-        def set_belongs_to_association_for(record)
+        alias_method :active_record_set_belongs_to_association_for, :set_belongs_to_association_for
+        def set_belongs_to_association_for_with_cache_expiration(record)
           reset_association_cache(record) if @reflection.options[:cached]
-
-          if @reflection.options[:as]
-            record["#{@reflection.options[:as]}_id"]   = @owner.id unless @owner.new_record?
-            record["#{@reflection.options[:as]}_type"] = @owner.class.base_class.name.to_s
-          else
-            record[@reflection.primary_key_name] = @owner.id unless @owner.new_record?
-          end
+          active_record_set_belongs_to_association_for(record)
         end
 
       private
