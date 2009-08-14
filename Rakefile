@@ -2,11 +2,20 @@ require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
 
+require "rubygems"
+require "spec/rake/spectask"
+
 version = '0.0.3'
 repositories = %w( origin rubyforge )
 
-desc 'Default: run unit tests.'
-task :default => :test
+desc 'Default: run the specs.'
+task :default => :spec
+
+desc "Run specs"
+Spec::Rake::SpecTask.new do |t|
+  t.spec_files = FileList['spec/**/*_spec.rb']
+  t.spec_opts = %w(-fs --color)
+end
 
 desc 'Test the cached_models plugin.'
 Rake::TestTask.new(:test) do |t|

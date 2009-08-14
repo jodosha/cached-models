@@ -1,13 +1,15 @@
 module ActiveRecord
   class Base
-    @@rails_cache = nil
-    cattr_accessor :rails_cache
+    @@associations_cache = nil
+    cattr_reader :associations_cache
 
     protected
-      def rails_cache
-        self.class.rails_cache
+      def associations_cache
+        self.class.associations_cache
       end
-      
+      # TODO this is a facility, remove when at the end of the refactoring.
+      alias_method :rails_cache, :associations_cache
+
       # Expire the cache for the associations which contains the given class.
       #
       # Example:

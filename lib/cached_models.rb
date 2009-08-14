@@ -1,4 +1,9 @@
-require 'activesupport' unless defined? Rails
-require File.dirname(__FILE__) + '/activerecord/lib/active_record'
+activerecord_path = "#{File.dirname(__FILE__)}/../vendor/activerecord/lib"
+if File.directory?(activerecord_path)
+  $:.unshift(activerecord_path)
+else
+  require "rubygems"
+end
 
-ActiveRecord::Base.rails_cache = Rails.cache if defined? Rails
+require "active_record"
+require "lib/activerecord/lib/active_record"
