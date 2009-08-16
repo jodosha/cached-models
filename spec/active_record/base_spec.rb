@@ -16,7 +16,13 @@ describe "ActiveRecord::Base" do
     @post.send(:association_cache_key, @reflection).should == "#{@post.cache_key}/#{@reflection.name}"
   end
 
-  it "should store in cache" do
+  it "should read from cache" do
+    association_cache_key = @post.send(:association_cache_key, @reflection)
+    @cache.write(association_cache_key, "value")
+    @post.send(:cache_read, @reflection).should == "value"
+  end
+
+  it "should write in cache" do
     association_cache_key = @post.send(:association_cache_key, @reflection)
     @post.send(:cache_write, @reflection, "value").should be_true
     @cache.read(association_cache_key).should == "value"

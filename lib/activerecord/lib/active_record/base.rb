@@ -8,6 +8,10 @@ module ActiveRecord
         self.class.associations_cache
       end
 
+      def cache_read(reflection)
+        associations_cache.read association_cache_key(reflection)
+      end
+
       def cache_write(reflection, value)
         associations_cache.write association_cache_key(reflection), value
       end
