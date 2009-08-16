@@ -12,5 +12,11 @@ describe "ActiveRecord::Associations" do
       @post.comments
       @cache.read("#{@post.cache_key}/comments").should_not be_nil
     end
+
+    it "should expire cache on association update" do
+      @post.comments # pre-load cache
+      @post.comments.create Factory.attributes_for(:comment)
+      @post.comments.should == @cache.read("#{@post.cache_key}/comments")
+    end
   end
 end
