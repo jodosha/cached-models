@@ -1,1 +1,1 @@
-require 'cached_models'
+require "cached_models"
